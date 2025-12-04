@@ -1,0 +1,26 @@
+# variables
+COMPLIER = c++
+DELETE   = rm -rf
+NAME     = webserver
+CPPFLAGS = -Wextra -Wall -Werror -std=c++98
+HEADERS  = -I./console
+OBJECTS  = ./console/console.o
+
+# rules
+all : $(NAME)
+
+$(NAME) : $(OBJECTS)
+	$(COMPLIER) $(HEADERS) $(CPPFLAGS) $(OBJECTS) -o $(NAME)
+
+%.o : %.cpp
+	$(COMPLIER) $(HEADERS) $(CPPFLAGS) $< -c -o $@
+
+clean :
+	$(DELETE) $(OBJECTS)
+
+fclean : clean
+	$(DELETE) $(NAME)
+
+re : fclean all
+
+.SECONDARY : $(OBJECTS)
