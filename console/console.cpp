@@ -3,10 +3,10 @@
 Console console; /* actual definition */
 
 void Console::init(
-  int port = 3000,
-  std::string network = "127.0.0.1",
-  std::string name = "www",
-  std::string version = "0.1.0"
+  int port,
+  std::string network,
+  std::string name,
+  std::string version
 ) const throw() {
   std::cout
   << std::endl
