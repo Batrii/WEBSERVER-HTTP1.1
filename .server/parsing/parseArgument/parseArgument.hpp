@@ -2,6 +2,7 @@
 #include <clock.hpp>
 #include <console.hpp>
 #include <fcntl.h>
+#include <vector>
 
 int parseArgument(char* argument, clock_tt startClock);
 

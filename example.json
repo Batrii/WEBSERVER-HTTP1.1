@@ -4,12 +4,12 @@
       "port": 3003,
       "name": "example",
       "version": "0.1.0",
-      "root": "/",
+      "root": "./",
       "routes": [
-        { "path": "/", "source": "./index.html", "method": ["GET"] }
+        { "path": "/", "source": "index.html", "method": ["GET"] }
       ],
-      "error": "./500.html",
-      "notfound": "./404.html",
+      "error": "500.html",
+      "notfound": "404.html",
       "bodysize": 1048576
     }
   ]
