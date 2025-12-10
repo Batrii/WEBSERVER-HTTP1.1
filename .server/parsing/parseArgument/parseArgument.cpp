@@ -27,19 +27,15 @@ int parseArgument(char* argument, clock_tt startClock) throw() {
       autoConfig(startClock);
       return 0;
     } catch (std::exception const& e) {
-      console.issue(("Failed to generate configuration file: " + std::string(e.what())).c_str());
+      console.issue("Failed to generate configuration file: " + std::string(e.what()));
       return 1;
     }
   } else {
     try {
-      std::string filepath(argument);
-      size_t dotPos = filepath.find_last_of('.');
-      if (dotPos == std::string::npos || filepath.substr(dotPos) != ".json")
-        throw std::runtime_error("Configuration file must have `.json` extension");
       pathConfig(argument, startClock);
       return 0;
     } catch (std::exception const& e) {
-      console.issue(("Failed to load configuration file: " + std::string(e.what())).c_str());
+      console.issue("Failed to load configuration file: " + std::string(e.what()));
       return 1;
     }
   }

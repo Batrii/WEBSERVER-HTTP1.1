@@ -1,5 +1,10 @@
 #include <parseArgument.hpp>
 
+// std::string filepath(argument);
+// size_t dotPos = filepath.find_last_of('.');
+// if (dotPos == std::string::npos || filepath.substr(dotPos) != ".json")
+//   throw std::runtime_error("Configuration file must have `.json` extension");
+
 void pathConfig(char* file, clock_tt startClock) {
 
   boost::property_tree::ptree jsonConfigFile;

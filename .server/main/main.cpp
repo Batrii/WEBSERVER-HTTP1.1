@@ -8,6 +8,9 @@ int main(int ac, char* av[]) {
     return 1;
   } else {
     int r = parseArgument(av[1], start);
+    if (!r) {
+      // open servers, object (serversInfo)
+    }
     return r;
   }
 }

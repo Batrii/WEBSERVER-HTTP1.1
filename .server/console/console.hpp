@@ -17,6 +17,14 @@ class Console {
     void GET(char const*, int, int) const throw();
     void POST(char const*, int, int) const throw();
     void DELETE(char const*, int, int) const throw();
+    void success(std::string) const throw();
+    void issue(std::string) const throw();
+    void info(std::string) const throw();
+    void warning(std::string) const throw();
+    void log(std::string) const throw();
+    void GET(std::string, int, int) const throw();
+    void POST(std::string, int, int) const throw();
+    void DELETE(std::string, int, int) const throw();
 };
 
 extern Console console;

@@ -123,3 +123,92 @@ void Console::DELETE(char const* path, int status, int in) const throw() {
   << "ms"
   << std::endl;
 }
+
+void Console::success(std::string s) const throw() {
+  std::cout << " \033[38;2;76;175;80m✓\033[0m " << s << std::endl;
+}
+
+void Console::issue(std::string i) const throw() {
+  std::cout << " \033[38;2;255;82;82m✗\033[0m " << i << std::endl;
+}
+
+void Console::info(std::string i) const throw() {
+  std::cout << " \033[38;2;66;165;245m•\033[0m " << i << std::endl;
+}
+
+void Console::warning(std::string w) const throw() {
+  std::cout << " \033[38;2;255;165;0m•\033[0m " << w << std::endl;
+}
+
+void Console::log(std::string l) const throw() {
+  std::cout << " " << l << std::endl;
+}
+
+void Console::GET(std::string path, int status, int in) const throw() {
+  std::string statusColor = "\033[0m";
+  if (status >= 200 && status < 300)
+    statusColor = "\033[38;2;76;175;80m";
+  else if (status >= 300 && status < 400)
+    statusColor = "\033[38;2;66;165;245m";
+  else if (status >= 400 && status < 500)
+    statusColor = "\033[38;2;255;165;0m";
+  else if (status >= 500 && status < 600)
+    statusColor = "\033[38;2;255;82;82m";
+  std::cout
+  << " GET "
+  << path
+  << " "
+  << statusColor
+  << status
+  << "\033[0m"
+  << " in "
+  << in
+  << "ms"
+  << std::endl;
+}
+
+void Console::POST(std::string path, int status, int in) const throw() {
+  std::string statusColor = "\033[0m";
+  if (status >= 200 && status < 300)
+    statusColor = "\033[38;2;76;175;80m";
+  else if (status >= 300 && status < 400)
+    statusColor = "\033[38;2;66;165;245m";
+  else if (status >= 400 && status < 500)
+    statusColor = "\033[38;2;255;165;0m";
+  else if (status >= 500 && status < 600)
+    statusColor = "\033[38;2;255;82;82m";
+  std::cout
+  << " POST "
+  << path
+  << " "
+  << statusColor
+  << status
+  << "\033[0m"
+  << " in "
+  << in
+  << "ms"
+  << std::endl;
+}
+
+void Console::DELETE(std::string path, int status, int in) const throw() {
+  std::string statusColor = "\033[0m";
+  if (status >= 200 && status < 300)
+    statusColor = "\033[38;2;76;175;80m";
+  else if (status >= 300 && status < 400)
+    statusColor = "\033[38;2;66;165;245m";
+  else if (status >= 400 && status < 500)
+    statusColor = "\033[38;2;255;165;0m";
+  else if (status >= 500 && status < 600)
+    statusColor = "\033[38;2;255;82;82m";
+  std::cout
+  << " DELETE "
+  << path
+  << " "
+  << statusColor
+  << status
+  << "\033[0m"
+  << " in "
+  << in
+  << "ms"
+  << std::endl;
+}
