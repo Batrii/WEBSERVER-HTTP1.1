@@ -8,7 +8,7 @@ class ServersInfo {
       private:
         std::string path;
         std::string source;
-        std::vector<std::string> method[];
+        std::vector<std::string> method;
     };
     class server {
       private:
@@ -16,10 +16,10 @@ class ServersInfo {
         std::string name;
         std::string version;
         std::string root;
-        std::vector<route> routes[];
+        std::vector<route> routes;
     };
 
-    std::vector<server> servers[];
+    std::vector<server> servers;
   public:
     inline std::size_t length() const throw();
 };
