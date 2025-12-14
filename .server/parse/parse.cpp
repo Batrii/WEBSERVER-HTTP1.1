@@ -1,5 +1,7 @@
 #include <server.hpp>
 #include <console.hpp>
+#include <fstream>
+#include <sstream>
 
 static int help(void) {
   console.info("Usage: ./webserver [options]");
@@ -38,8 +40,27 @@ static int configRules(void) {
 }
 
 static int configFile(std::string const& file) {
-  (void)file;
-  return 0;
+  try {
+    if (file.empty())
+      throw std::runtime_error("no filename provided");
+
+    std::ifstream configFileStream(std::string(".server/.config/" + file + ".json").c_str());
+    if (!configFileStream)
+      throw std::runtime_error("no such file " + file + ".json in .server/.config/ folder with read permissions");
+
+    std::stringstream buffer;
+    buffer << configFileStream.rdbuf();
+    configFileStream.close();
+    std::string configFileContent = buffer.str();
+
+    if (configFileContent.empty())
+      throw std::runtime_error("empty file");
+
+    return 0;
+  } catch (std::exception& e) {
+    console.issue("Failed to load configuration file: " + std::string(e.what()));
+    return 1;
+  }
 }
 
 static int autoConfig(void) {
