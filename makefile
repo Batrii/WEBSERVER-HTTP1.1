@@ -7,7 +7,8 @@ HEADERS  = -I./.server/lib
 OBJECTS  = ./.server/lib/extern.o \
 		   ./.server/main/main.o \
 		   ./.server/parse/parse.o \
-		   ./.server/parse/json.o
+		   ./.server/parse/json.o \
+		   ./.server/run/run.o
 
 # rules
 all : $(NAME)

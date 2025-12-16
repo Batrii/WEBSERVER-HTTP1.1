@@ -35,7 +35,7 @@ static int configRules(void) {
   console.log("                       |");
   console.log("                       ├───── path:   The URL path for the route (required)");
   console.log("                       ├───── source: The file to serve for this route (required)");
-  console.log("                       └───── method: An array of allowed HTTP methods for this route (optional, default: [\"GET\"])");
+  console.log("                       └───── method: An array of allowed HTTP methods for this route (optional, default: [\"GET\", \"POST\"])");
   console.log("");
   console.info("Josn format shold be like this:");
   console.log("{");
@@ -93,6 +93,6 @@ int parse(int ac, char* av[]) {
     else if (arg == "--auto-config")
       return autoConfig();
   }
-  console.warning("Run `./webserver --help` for more informations");
+  console.warning("Run './webserver --help' for more informations");
   return 2;
 }
