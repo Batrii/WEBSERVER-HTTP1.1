@@ -8,6 +8,7 @@ OBJECTS  = ./.server/lib/extern.o \
 		   ./.server/main/main.o \
 		   ./.server/parse/parse.o \
 		   ./.server/parse/json.o \
+		   ./.server/parse/generate.o \
 		   ./.server/run/run.o
 
 # rules
