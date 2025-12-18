@@ -34,7 +34,12 @@ static int configRules(void) {
   console.log("         └───── routes:      An array of route configurations (optional)");
   console.log("                       |");
   console.log("                       ├───── path:   The URL path for the route (required)");
-  console.log("                       ├───── source: The file to serve for this route (required)");
+  console.log("                       ├───── source: The file to serve for this route (optional, none)");
+  console.log("                       ├───── dictlist: A boolean to enable directory listing (optional, default: false)");
+  console.log("                       ├───── redirect: The URL to redirect to (optional, none)");
+  console.log("                       ├───── cgi_script:      The CGI script to execute for this route (optional, none)");
+  console.log("                       ├───── cgi_interpreter: The interpreter to use for the CGI script (optional, none)");
+  console.log("                       ├───── cgi_timeout:     The timeout for the CGI script in seconds (optional, default: 1000)");
   console.log("                       └───── method: An array of allowed HTTP methods for this route (optional, default: [\"GET\", \"POST\"])");
   console.log("");
   console.info("Josn format shold be like this: (values as strings where applicable)");

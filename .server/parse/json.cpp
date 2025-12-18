@@ -80,9 +80,7 @@ static void fillDefault(void) {
           route.add("GET");
           route.add("POST");
         }
-        if (route.source().empty())
-          throw std::runtime_error("route source is required");
-        else
+        if (!route.source().empty())
           route.source() = server[i].root() + route.source();
         std::vector<std::string> tempMethods;
         for (std::size_t k = 0; k < route.length(); k++) {
@@ -96,6 +94,28 @@ static void fillDefault(void) {
         }
         tempMethods.clear();
       }
+    }
+    for (std::size_t j = 0; j < server[i].length(); j++) {
+      rt& route = server[i].route(j);
+      bool hasCgiScript = !route.cgiScript().empty();
+      bool hasCgiInterpreter = !route.cgiInterpreter().empty();
+      bool hasCgiTimeout = route.cgiTimeout() != 0;
+      bool hasCgi = hasCgiScript || hasCgiInterpreter || hasCgiTimeout;
+      if (hasCgi) {
+        if (!route.source().empty())
+          throw std::runtime_error("CGI route cannot have source field");
+        if (!route.redirect().empty())
+          throw std::runtime_error("CGI route cannot have redirect field");
+        if (route.cgiScript().empty())
+          throw std::runtime_error("CGI route missing cgi_script");
+        if (route.cgiInterpreter().empty())
+          throw std::runtime_error("CGI route missing cgi_interpreter");
+        if (route.cgiTimeout() == 0)
+          route.cgiTimeout() = 1000;
+      }
+      if (!route.redirect().empty()
+          && (!route.source().empty() || hasCgi))
+        throw std::runtime_error("redirect route cannot have source or cgi settings");
     }
   }
   std::vector<std::string> temp;
@@ -167,6 +187,43 @@ static void storeRouteKeyValue(std::string const &key, std::string const &value,
       throw std::runtime_error("invalid source value");
     route.source() = value.substr(1, value.length() - 2);
   }
+  else if (key == "dictlist") {
+    if (isString(value))
+      throw std::runtime_error("invalid dictlist value");
+    std::string temp = value.substr(1, value.length() - 2);
+    if (temp != "true" && temp != "false")
+      throw std::runtime_error("invalid dictlist value");
+    if (temp == "true")
+      route.dictlist() = true;
+    else
+      route.dictlist() = false;
+  }
+  else if (key == "redirect") {
+    if (isString(value))
+      throw std::runtime_error("invalid redirect value");
+    route.redirect() = value.substr(1, value.length() - 2);
+  }
+  else if (key == "cgi_script") {
+    if (isString(value))
+      throw std::runtime_error("invalid cgi_script value");
+    route.cgiScript() = value.substr(1, value.length() - 2);
+  }
+  else if (key == "cgi_interpreter") {
+    if (isString(value))
+      throw std::runtime_error("invalid cgi_interpreter value");
+    route.cgiInterpreter() = value.substr(1, value.length() - 2);
+  }
+  else if (key == "cgi_timeout") {
+    if (isString(value))
+      throw std::runtime_error("invalid cgi_timeout value");
+    std::string temp = value.substr(1, value.length() - 2);
+    if (isDigit(temp))
+      throw std::runtime_error("invalid cgi_timeout value");
+    long long cgiTimeout = std::atoll(temp.c_str());
+    if (cgiTimeout <= 0 || cgiTimeout > 9600)
+      throw std::runtime_error("invalid cgi_timeout value");
+    route.cgiTimeout() = static_cast<std::size_t>(cgiTimeout);
+  }
   else if (key == "method") {
     if (value[0] != '[')
       throw std::runtime_error("method value must be an array");
@@ -211,7 +268,7 @@ static void storeRouteKeyValue(std::string const &key, std::string const &value,
       throw std::runtime_error("expected ']' at end of method array");
   }
   else
-    throw std::runtime_error("unknown key: " + key);
+    throw std::runtime_error("unknown routes key: " + key);
 }
 
 static int extractRouteKey(std::string const &value, std::size_t &pos, rt &route) {

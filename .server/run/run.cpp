@@ -24,6 +24,11 @@ int run(long long start) {
       std::cout << "    Route #" << (j + 1) << ":" << std::endl;
       std::cout << "      Path:    " << route.path() << std::endl;
       std::cout << "      Source:  " << route.source() << std::endl;
+      std::cout << "      Dictlist:" << (!route.dictlist() ? "false" : "true") << std::endl;
+      std::cout << "      Redirect:" << (route.redirect().empty() ? " none" : " " + route.redirect()) << std::endl;
+      std::cout << "      CGI Script:      " << (route.cgiScript().empty() ? " none" : route.cgiScript()) << std::endl;
+      std::cout << "      CGI Interpreter:" << (route.cgiInterpreter().empty() ? " none" : " " + route.cgiInterpreter()) << std::endl;
+      std::cout << "      CGI Timeout:     " << (route.cgiTimeout() ? " none" : " ") << route.cgiTimeout() << " s" << std::endl;
       std::cout << "      Methods: ";
       for (std::size_t k = 0; k < route.length(); k++) {
         std::cout << route.method(k);

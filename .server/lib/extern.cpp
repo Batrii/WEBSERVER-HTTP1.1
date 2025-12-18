@@ -22,4 +22,5 @@ void loadPermissions(void) {
   secureFolders.push_back("node_modules");
   secureFolders.push_back(".server");
   secureFolders.push_back(".vscode");
+  secureFolders.push_back("cgi");
 }

@@ -6,9 +6,20 @@ class rt {
   private:
     std::string _path;
     std::string _source;
+    bool _dictlist;
+    std::string _redirect;
+    std::string _cgiScript;
+    std::string _cgiInterpreter;
+    std::size_t _cgiTimeout;
     std::vector<std::string> _methods;
   public:
+    rt(): _dictlist(false), _cgiTimeout(0) {}
     inline std::string& path(void) throw() { return this->_path; }
+    inline bool& dictlist(void) throw() { return this->_dictlist; }
+    inline std::string& redirect(void) throw() { return this->_redirect; }
+    inline std::string& cgiScript(void) throw() { return this->_cgiScript; }
+    inline std::string& cgiInterpreter(void) throw() { return this->_cgiInterpreter; }
+    inline std::size_t& cgiTimeout(void) throw() { return this->_cgiTimeout; }
     inline std::string& source(void) throw() { return this->_source; }
     inline std::string& method(unsigned int index) throw() { return this->_methods[index]; }
 

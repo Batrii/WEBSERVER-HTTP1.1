@@ -46,6 +46,12 @@ static void createRoutes(std::string fullPath, ctr& currentServer, std::string b
     }
   }
 
+  rt& route = currentServer.create();
+  route.path() = basePath;
+  route.source() = fullPath + currentServer.index();
+  route.add("GET");
+  route.add("POST");
+
   closedir(appDir);
 }
 

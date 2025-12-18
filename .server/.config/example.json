@@ -17,6 +17,27 @@
           "path": "/",
           "source": "./index.html",
           "method": ["GET"]
+        },
+        {
+          "path": "/list",
+          "dictlist": "true",
+          "source": "./",
+          "method": ["GET"]
+        },
+        {
+          "path": "/redirect",
+          "redirect": "https://example.com"
+        },
+        {
+          "path": "/upload",
+          "method": ["GET", "POST"]
+        },
+        {
+          "path": "/cgi/hello",
+          "cgi_script": "./cgi/hello.py",
+          "cgi_interpreter": "/usr/bin/python3",
+          "cgi_timeout": "10",
+          "method": ["GET", "POST"]
         }
       ]
     }
