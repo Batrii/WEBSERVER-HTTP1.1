@@ -1,43 +1,79 @@
 #include <server.hpp>
 #include <console.hpp>
+#include <time.hpp>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <cstring>
+#include <sstream>
 
 int run(long long start) {
-  (void)start;
-  
+
   for (std::size_t i = 0; i < server.length(); i++) {
-    ctr& s = server[i];
-    std::cout << "Server #" << (i + 1) << ":" << std::endl;
-    std::cout << "  Port:        " << s.port() << std::endl;
-    std::cout << "  Name:        " << s.name() << std::endl;
-    std::cout << "  Version:     " << s.version() << std::endl;
-    std::cout << "  Root:        " << s.root() << std::endl;
-    std::cout << "  Index:       " << s.index() << std::endl;
-    std::cout << "  Not Found:   " << s.notfound() << std::endl;
-    std::cout << "  Error Page:  " << s.servererror() << std::endl;
-    std::cout << "  Log File:    " << s.log() << std::endl;
-    std::cout << "  Upload Dir:  " << s.uploaddir() << std::endl;
-    std::cout << "  Body Limit:  " << s.bodylimit() << " bytes" << std::endl;
-    std::cout << "  Timeout:     " << s.timeout() << " ms" << std::endl;
-    std::cout << "  Routes:      " << s.length() << std::endl;
-    for (std::size_t j = 0; j < s.length(); j++) {
-      rt& route = s.route(j);
-      std::cout << "    Route #" << (j + 1) << ":" << std::endl;
-      std::cout << "      Path:    " << route.path() << std::endl;
-      std::cout << "      Source:  " << route.source() << std::endl;
-      std::cout << "      Dictlist:" << (!route.dictlist() ? "false" : "true") << std::endl;
-      std::cout << "      Redirect:" << (route.redirect().empty() ? " none" : " " + route.redirect()) << std::endl;
-      std::cout << "      CGI Script:      " << (route.cgiScript().empty() ? " none" : route.cgiScript()) << std::endl;
-      std::cout << "      CGI Interpreter:" << (route.cgiInterpreter().empty() ? " none" : " " + route.cgiInterpreter()) << std::endl;
-      std::cout << "      CGI Timeout:     " << (route.cgiTimeout() ? " none" : " ") << route.cgiTimeout() << " s" << std::endl;
-      std::cout << "      Methods: ";
-      for (std::size_t k = 0; k < route.length(); k++) {
-        std::cout << route.method(k);
-        if (k < route.length() - 1)
-          std::cout << ", ";
-      }
-      std::cout << std::endl;
+
+    // create socket
+    int serverFD = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverFD < 0) {
+      console.issue("Failed to create socket for " + server[i].name());
+      continue;
     }
-    std::cout << std::endl;
+
+    // Set socket options
+    int opt = 1;
+    setsockopt(serverFD, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+    // Bind socket
+    struct sockaddr_in address;
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(server[i].port());
+
+    if (bind(serverFD, (struct sockaddr*)&address, sizeof(address)) < 0) {
+      console.issue("Failed to bind socket for " + server[i].name());
+      close(serverFD);
+      continue;
+    }
+
+    // Listen for connections
+    if (listen(serverFD, 10) < 0) {
+      console.issue("Failed to listen on " + server[i].name());
+      close(serverFD);
+      continue;
+    }
+
+    console.init(server[i].port(), "0.0.0.0", server[i].name(), server[i].version());
+    // console.success("Ready in " + (num2str(time::calc(start, time::clock()))) + "ms");
+
+    // Accept and handle requests
+    while (true) {
+      struct sockaddr_in client_address;
+      socklen_t client_len = sizeof(client_address);
+      int client_fd = accept(serverFD, (struct sockaddr*)&client_address, &client_len);
+
+      if (client_fd < 0) {
+        continue;
+      }
+
+      // Read request (simple read)
+      char buffer[4096] = {0};
+      read(client_fd, buffer, sizeof(buffer) - 1);
+
+      // Send HTTP response
+      const char* response = 
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: text/plain\r\n"
+        "Content-Length: 5\r\n"
+        "\r\n"
+        "hello";
+
+      send(client_fd, response, strlen(response), 0);
+      close(client_fd);
+    }
+
+    close(serverFD);
   }
+
   return 0;
 }

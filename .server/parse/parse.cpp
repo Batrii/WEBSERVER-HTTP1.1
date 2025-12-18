@@ -10,7 +10,7 @@ static int help(void) {
   console.log("  --config-rules             Show all available configuration rules");
   console.log("  --config-file=<filename>   Specify a custom configuration file, this file");
   console.log("                             must be in JSON format and in .server/.config/ folder");
-  console.log("  --auto-config              Generate a default configuration file in");
+  console.log("  --auto-config              Generate a default configuration file in (for static pages only)");
   return 2;
 }
 

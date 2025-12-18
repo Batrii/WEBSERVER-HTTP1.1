@@ -25,11 +25,11 @@ static void fillDefault(void) {
         throw std::runtime_error("index file must be relative");
     }
     if (server[i].notfound().empty())
-      server[i].notfound() = ".server/.build/not-found.html";
+      server[i].notfound() = "DEFAULT";
     else
       server[i].notfound() = server[i].root() + server[i].notfound();
     if (server[i].servererror().empty())
-      server[i].servererror() = ".server/.build/server-error.html";
+      server[i].servererror() = "DEFAULT";
     else
       server[i].servererror() = server[i].root() + server[i].servererror();
     if (server[i].log().empty())
