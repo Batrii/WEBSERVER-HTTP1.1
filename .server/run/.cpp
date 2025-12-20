@@ -5,8 +5,10 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <cstring>
+#include <sstream>
 #include <poll.h>
 #include <request.hpp>
+#include <status.hpp>
 
 std::string getNetworkIP();
 int run(long long start) {
@@ -80,6 +82,8 @@ int run(long long start) {
                                             mean: what's the socket get event === POLLIN, because poll detected it */
         int client = accept(pollfds[i].fd, NULL, NULL); // this params (NULL) returns information about user (IP,..)
 
+        long long startRequestTime = time::clock();
+
         char* requestBuffer = new char(4096 * server[i].bodylimit()); // buffer to store request
         if (!requestBuffer) {
           console.issue("Failed to allocate memory for request buffer");
@@ -97,8 +101,11 @@ int run(long long start) {
         request req(requestBuffer);
 
         if (req.getBadRequest()) {
-          // std::string response = "HTTP/1.1 " + std::to_string(req.getBadRequest()) + " Error\r\n\r\n";
-          // send(client, response.c_str(), response.length(), 0);
+          // std::stringstream response;
+          // response << "HTTP/1.1 " << req.getBadRequest() << " Error\r\n\r\n";
+          // std::string responseStr = response.str();
+          // send(client, responseStr.c_str(), responseStr.length(), 0);
+          // console.METHODS(req.getMethod(), req.getPath(), req.getBadRequest(), time::calcl(startRequestTime, time::clock()));
           // delete requestBuffer;
           // close(client);
           // continue;
@@ -107,14 +114,13 @@ int run(long long start) {
         char buffer;
         if (read(client, &buffer, 1) < 0) { // check if there's more data to read
 
-          ;
+          // ;//413
 
-          delete requestBuffer;
-          close(client);
-          continue;
+          // delete requestBuffer;
+          // close(client);
+          // continue;
         }
-          
-      //     send(client_fd, "HTTP/1.1 200 OK\r\n\r\nHello!", 26, 0);
+
         delete requestBuffer;
         close(client);
       }
