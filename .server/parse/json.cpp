@@ -28,10 +28,7 @@ static void fillDefault(void) {
          it != server[i].errorPages().end(); ++it) {
       if (it->second.empty())
         throw std::runtime_error("error page path cannot be empty for code: " + it->first);
-      if (it->second[0] == '.' || it->second[0] == '/')
-        it->second = server[i].root() + it->second;
-      else
-        throw std::runtime_error("error page path must be relative for code: " + it->first);
+      it->second = server[i].root() + it->second;
     }
     if (server[i].log().empty())
       server[i].log() = ".server/.log/" + server[i].name() + "/" + server[i].name() + ".log";
@@ -475,6 +472,9 @@ static void storeKeyValue(std::string const &key, std::string const &value, ctr 
       throw std::runtime_error("expected ']' at the end of servers array");
   }
   else if (!isDigit(key.substr(1, key.length() - 2))) {
+    long long code = std::atoll(key.c_str());
+    if (code < 100 || code > 599)
+      throw std::runtime_error("invalid error page code: " + key);
     if (isString(value))
       throw std::runtime_error("invalid error page value");
     s.errorPages()[key] = value.substr(1, value.length() - 2);
