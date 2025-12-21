@@ -9,7 +9,17 @@
 
 void methodGet(int client, request& req, ctr& currentServer, long long startRequestTime) {
 
-  std::string response = error(404).page();
+  std::string response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n" + error(404).page();
+
+  std::string notFoundPageSource = currentServer.errorPages()["404"];  
+  if (!notFoundPageSource.empty()) {
+    std::stringstream body;
+    std::fstream file(notFoundPageSource.c_str());
+    if(file.is_open()){
+      body << file.rdbuf();
+      response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n" + body.str();
+    }
+  }
 
   std::size_t i = 0;
   while (i < currentServer.length()) {
