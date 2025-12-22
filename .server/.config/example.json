@@ -19,6 +19,11 @@
           "method": ["GET"]
         },
         {
+          "path": "/.env",
+          "source": "./.env",
+          "method": ["GET"]
+        },
+        {
           "path": "/list",
           "dictlist": "true",
           "source": "./",
