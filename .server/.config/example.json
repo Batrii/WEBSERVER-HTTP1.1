@@ -14,9 +14,7 @@
       "root": "./",
       "routes": [
         {
-          "path": "/",
-          "source": "./index.html",
-          "method": ["GET"]
+          "path": "/"
         },
         {
           "path": "/.env",

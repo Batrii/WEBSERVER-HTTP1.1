@@ -45,9 +45,11 @@ static void fillDefault(void) {
     if (server[i].length() != 0) {
       std::vector<std::string> tempPaths;
       for (std::size_t j = 0; j < server[i].length(); j++) {
+        if (server[i].route(j).source().empty())
+          server[i].route(j).source() = server[i].root() + server[i].route(j).path() + server[i].index();
         if (server[i].route(j).path().empty())
           throw std::runtime_error("route path is required");
-        else if (server[i].route(j).path().find('?') != std::string::npos)
+        else if (server[i].route(j).path().find('?') != std::string::npos || server[i].route(j).path().find('#') != std::string::npos)
           throw std::runtime_error("route path cannot contain query string (queries are ignored, don't handled yet)");
         tempPaths.push_back(server[i].route(j).path());
         if (server[i].route(j).path()[0] != '/')
@@ -80,8 +82,6 @@ static void fillDefault(void) {
           route.add("GET");
           route.add("POST");
         }
-        if (!route.source().empty())
-          route.source() = server[i].root() + route.source();
         std::vector<std::string> tempMethods;
         for (std::size_t k = 0; k < route.length(); k++) {
           tempMethods.push_back(route.method(k));
@@ -102,8 +102,6 @@ static void fillDefault(void) {
       bool hasCgiTimeout = route.cgiTimeout() != 0;
       bool hasCgi = hasCgiScript || hasCgiInterpreter || hasCgiTimeout;
       if (hasCgi) {
-        if (!route.source().empty())
-          throw std::runtime_error("CGI route cannot have source field");
         if (!route.redirect().empty())
           throw std::runtime_error("CGI route cannot have redirect field");
         if (route.cgiScript().empty())
@@ -114,9 +112,10 @@ static void fillDefault(void) {
           route.cgiTimeout() = 1000;
       }
       if (!route.redirect().empty()
-          && (!route.source().empty() || hasCgi))
-        throw std::runtime_error("redirect route cannot have source or cgi settings");
-      route.cgiScript() = server[i].root() + route.cgiScript();
+          && hasCgi)
+        throw std::runtime_error("redirect route cannot have cgi settings");
+      if (!route.cgiScript().empty())
+        route.cgiScript() = server[i].root() + route.cgiScript();
     }
   }
   std::vector<std::string> temp;
