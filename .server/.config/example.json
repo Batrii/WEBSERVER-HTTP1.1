@@ -19,6 +19,11 @@
           "method": ["GET"]
         },
         {
+          "path": "/get",
+          "source": "./get.html",
+          "method": ["GET"]
+        },
+        {
           "path": "/.env",
           "source": ".env",
           "method": ["GET"]
@@ -29,8 +34,8 @@
           "method": ["GET"]
         },
         {
-          "path": "/node_modules",
-          "source": "/node_modules",
+          "path": "/modules",
+          "source": "modules",
           "method": ["GET"]
         },
         {

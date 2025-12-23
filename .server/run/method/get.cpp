@@ -8,14 +8,13 @@
 #include <sys/socket.h>
 #include <permission.hpp>
 #include <sys/stat.h>
+#include <unistd.h>
+
 
 bool is_forbedden_path(const std::string& source_path, std::string valid_path) {
     struct stat buffer;
-    std::cout << source_path << std::endl;
-    if (stat(source_path.c_str(), &buffer) != 0) {
-        std::cout << "khdam ala raso\n";
+    if (stat(source_path.c_str(), &buffer) != 0)
         return false;
-    }
     if (S_ISREG(buffer.st_mode)) {
       
         for (size_t i = 0; i < secureFiles.size(); i++) {
@@ -33,6 +32,22 @@ bool is_forbedden_path(const std::string& source_path, std::string valid_path) {
     }
 
     return false;
+}
+
+bool  is_dir(const request& req){
+
+  struct stat buffer;
+  if(stat(req.getPath().c_str(), &buffer) == 0){
+    if(S_ISDIR(buffer.st_mode))
+      return true;
+  }
+  return false;
+}
+
+bool hasDirAccess(const std::string& path) {
+  if(access(path.c_str(), R_OK | X_OK) != 0)
+    return false;
+  return true;
 }
 
 void methodGet(int client, request& req, ctr& currentServer, long long startRequestTime) {
@@ -64,7 +79,6 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
       }
       if (!part.empty() && part[0] == '/')
         part.erase(0, 1);
-      std::cout << part << std::endl;
       // check if forbedden path
       if(is_forbedden_path(sourcePath, part))
         isSecurePath = true;
@@ -77,10 +91,13 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
         return ;
       }
 
+      //handele timeout
+      
+
       std::ifstream file;
       file.open(sourcePath.c_str());
-      // std::cout << "Trying to open file: " << sourcePath << std::endl;
-      if (file.is_open()) {
+      std::cout << "Trying to open file: " << sourcePath << std::endl;
+      if (file.is_open() == true) {
         // std::cout << "Serving file: " << sourcePath << std::endl;
         std::stringstream body;
         body << file.rdbuf();
@@ -90,6 +107,20 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
         console.METHODS(req.getMethod(), req.getPath(), 200, time::calcl(startRequestTime, time::clock()));
         return;
       }
+
+      // if (is_dir(req) == true){
+      //   std::string dirPath = sourcePath;
+      //   // std::cout << "hadchi khdam\n";
+      //   //check if the dir has full access to get data !!
+      //   if (!hasDirAccess(dirPath)) {
+      //     response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/html\r\n\r\n" + error(403).page();
+      //     send(client, response.c_str(), response.length(), 0);
+      //     console.METHODS(req.getMethod(), req.getPath(), 403, time::calcl(startRequestTime, time::clock()));
+      //     return;
+      //   }
+      //   // check if the index is set !!
+
+      // }
       break;
     }
     i++;
