@@ -71,7 +71,5 @@ void logMessage(std::string const message, ctr& server) {
   if (logFile.is_open()) {
     logFile << message << std::endl;
     logFile.close();
-  } else {
-    std::cerr << "Error: Could not open log file: " << logPath << std::endl;
   }
 }
