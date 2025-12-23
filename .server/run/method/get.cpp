@@ -7,27 +7,34 @@
 #include <fstream>
 #include <sys/socket.h>
 #include <permission.hpp>
+#include <sys/stat.h>
 
+bool is_forbedden_path(const std::string& source_path) {
+    struct stat buffer;
+    
+    if (stat(source_path.c_str(), &buffer) != 0) {
+        std::cout << "khdam ala raso\n";
+        return false;
+    }
 
-bool  isSecurePath(request &r) {
+    if (S_ISREG(buffer.st_mode)) {
+      
+        for (size_t i = 0; i < secureFiles.size(); i++) {
+            if (source_path.find(secureFiles[i]) != std::string::npos) {
+                return true;
+            }
+        }
+    }
+    else if (S_ISDIR(buffer.st_mode)) {
+        for (size_t i = 0; i < secureFolders.size(); i++) {
+            if (source_path.find(secureFolders[i]) != std::string::npos) {
+                return true;
+            }
+        }
+    }
 
-  std::vector<std::string> forbeden_files = secureFiles;
-  std::vector<std::string> forbeden_folders = secureFolders;
-  for (size_t i = 0; i < forbeden_files.size(); i++)
-  {
-
-    if (r.getPath().find(forbeden_files[i]) != std::string::npos)
-      return true;
-  }
-
-  for (size_t i = 0; i < forbeden_folders.size(); i++)
-  {
-    if (r.getPath().find("/" + forbeden_folders[i]) != std::string::npos)
-      return true;
-  }
-  return false;
+    return false;
 }
-
 
 void methodGet(int client, request& req, ctr& currentServer, long long startRequestTime) {
 
@@ -47,7 +54,21 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
   while (i < currentServer.length()) {
     std::string sourcePath = currentServer.route(i).source();
     if (req.getPath() == currentServer.route(i).path()) {
-      if(isSecurePath(req) == true){
+      bool isSecurePath = false;
+
+      // std::string fullPath = sourcePath;
+      // size_t pos = 0;
+      // std::string part;
+      // while((pos = fullPath.find('/', pos)) != std::string::npos) {
+      //   part = fullPath.substr(pos);
+      //   pos += 1;
+      // }
+      // std::cout << part << std::endl;
+      // check if forbedden path
+      if(is_forbedden_path(sourcePath))
+        isSecurePath = true;
+
+      if(isSecurePath){
         // std::cout << "Path is secure, proceeding to serve the file." << std::endl;
         response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/html\r\n\r\n" + error(403).page();
         send(client, response.c_str(), response.length(), 0);

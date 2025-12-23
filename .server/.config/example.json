@@ -24,6 +24,16 @@
           "method": ["GET"]
         },
         {
+          "path": "/makefile",
+          "source": "/makefile",
+          "method": ["GET"]
+        },
+        {
+          "path": "/node_modules",
+          "source": "/node_modules",
+          "method": ["GET"]
+        },
+        {
           "path": "/list",
           "dictlist": "true",
           "source": "./",
