@@ -19,18 +19,8 @@
           "method": ["GET"]
         },
         {
-          "path": "/get",
-          "source": "./get.html",
-          "method": ["GET"]
-        },
-        {
-          "path": "/.env",
-          "source": ".env",
-          "method": ["GET"]
-        },
-        {
-          "path": "/makefile",
-          "source": "/makefile",
+          "path": "/image",
+          "source": "./Wallpaper.jpg",
           "method": ["GET"]
         },
         {

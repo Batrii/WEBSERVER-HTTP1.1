@@ -44,11 +44,29 @@ bool  is_dir(const request& req){
   return false;
 }
 
-bool hasDirAccess(const std::string& path) {
-  if(access(path.c_str(), R_OK | X_OK) != 0)
-    return false;
-  return true;
+std::string get_the_Content_Type(const std::string path){
+
+  size_t pos = 0;
+  // std::cout << "path: " << path << std::endl;
+  if((pos = path.find(".")) != std::string::npos){
+    std::string content_path = path.substr(pos, path.length() - pos);
+    if(content_path == ".jpg")
+      return "Content-Type: image/jpg";
+    else if (content_path == ".png")
+      return "Content-Type: image/png";
+    else if (content_path == ".html")
+      return "Content-Type: text/html";
+    else if (content_path == ".css")
+      return "Content-Type: text/css";
+    else if (content_path == ".js")
+      return "Content-Type: text/js";
+    else if (content_path == ".gif")
+      return "Content-Type: text/gif";
+  }
+  return "Content-Type: text/plain";
 }
+
+
 
 void methodGet(int client, request& req, ctr& currentServer, long long startRequestTime) {
 
@@ -84,7 +102,6 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
         isSecurePath = true;
 
       if(isSecurePath){
-        // std::cout << "Path is secure, proceeding to serve the file." << std::endl;
         response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/html\r\n\r\n" + error(403).page();
         send(client, response.c_str(), response.length(), 0);
         console.METHODS(req.getMethod(), req.getPath(), 403, time::calcl(startRequestTime, time::clock()));
@@ -92,17 +109,16 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
       }
 
       //handele timeout
-      
 
       std::ifstream file;
       file.open(sourcePath.c_str());
-      std::cout << "Trying to open file: " << sourcePath << std::endl;
       if (file.is_open() == true) {
+        // std::cout << "is open here" << std::endl;
         // std::cout << "Serving file: " << sourcePath << std::endl;
         std::stringstream body;
         body << file.rdbuf();
         file.close();
-        response = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n" + body.str();
+        response = "HTTP/1.1 200 OK\r\n" + get_the_Content_Type(part) + "\r\n\r\n" + body.str();
         send(client, response.c_str(), response.length(), 0);
         console.METHODS(req.getMethod(), req.getPath(), 200, time::calcl(startRequestTime, time::clock()));
         return;
@@ -110,14 +126,9 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
 
       // if (is_dir(req) == true){
       //   std::string dirPath = sourcePath;
-      //   // std::cout << "hadchi khdam\n";
-      //   //check if the dir has full access to get data !!
-      //   if (!hasDirAccess(dirPath)) {
-      //     response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/html\r\n\r\n" + error(403).page();
-      //     send(client, response.c_str(), response.length(), 0);
-      //     console.METHODS(req.getMethod(), req.getPath(), 403, time::calcl(startRequestTime, time::clock()));
-      //     return;
-      //   }
+
+      //   std::cout << "hadchi khdam\n";
+
       //   // check if the index is set !!
 
       // }
