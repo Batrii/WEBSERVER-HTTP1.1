@@ -116,7 +116,8 @@ bool send_file(int client, const std::string& path, const std::string& clean_pat
   std::string headers =
         "HTTP/1.1 200 OK\r\n"
         + ("Content-Length: " + size_str.str()) + "\r\n"
-        + get_the_Content_Type(clean_path) + "\r\n\r\n";
+        + get_the_Content_Type(clean_path) + "\r\n"
+        "Connection: close\r\n\r\n";
 
   send(client, headers.c_str(), headers.size(), 0);
   char buffer[8192]; // 8192 = 8KB
@@ -129,7 +130,7 @@ bool send_file(int client, const std::string& path, const std::string& clean_pat
     while (bytes_sent < (size_t)byte_read)
     {
       ssize_t n = send(client, buffer + bytes_sent, byte_read - bytes_sent, 0);
-      if (n <= 0){}
+      if (n <= 0)
         return false;  // client closed or error
       bytes_sent += n;
     }
@@ -191,9 +192,8 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
       //   console.METHODS(req.getMethod(), req.getPath(), 200, time::calcl(startRequestTime, time::clock()));
       //   return;
       // }
-      if (send_file(client, sourcePath, part, req, startRequestTime) == true){
+      if (send_file(client, sourcePath, part, req, startRequestTime) == true)
         return ;
-      }
         
 
       // if (is_dir(req) == true){
