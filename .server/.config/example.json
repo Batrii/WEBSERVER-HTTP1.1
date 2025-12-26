@@ -28,6 +28,11 @@
           "method": ["GET"]
         },
         {
+          "path": "/delete",
+          "source": "hello.txt",
+          "method": ["GET", "DELETE"]
+        },
+        {
           "path": "/redirect",
           "redirect": "https://example.com"
         },
