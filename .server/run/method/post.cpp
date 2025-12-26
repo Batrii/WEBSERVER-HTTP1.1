@@ -104,6 +104,9 @@ void handle_multipart(const std::string& content, request& req) {
       }
     }
   }
+  else {
+    return;
+  }
 }
 
 void handle_json(const std::string& content) {
