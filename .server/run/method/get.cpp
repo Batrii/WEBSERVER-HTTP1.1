@@ -98,11 +98,9 @@ bool send_file(int client, const std::string& path, const std::string& clean_pat
     const request& req, long long startRequestTime, long long timeout) {
 
   std::ifstream file(path.c_str());
-  if (!file.is_open()){
-    std::cout << "Failed to open file: " << path << "\n";
+  if (!file.is_open())
     return false;
-  }
-    
+  
   //get the full size of the file
   file.seekg(0, std::ios::end);
   size_t size = file.tellg();
@@ -171,7 +169,7 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
           break ;
         }
       }
-      
+
       if (get_allowed == false)
       {
           std::string response =
