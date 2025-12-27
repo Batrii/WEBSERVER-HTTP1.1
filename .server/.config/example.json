@@ -26,7 +26,8 @@
         {
           "path": "/modules",
           "source": "modules",
-          "method": ["POST"]
+          "dictlist": "true",
+          "method": ["GET","POST"]
         },
         {
           "path": "/list",
