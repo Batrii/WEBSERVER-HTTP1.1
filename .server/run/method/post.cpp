@@ -49,7 +49,7 @@ void urlencoder::parseBodyContent(std::string& content)
   }
 }
 
-int handle_multipart(const std::string& content, request& req) {
+int handle_multipart(const std::string& content, request& req , ctr& currentServer) {
   std::string boundaryname = req.getHeaders().at("Content-Type");
   std::size_t boundary_pos = boundaryname.find("boundary=");
   if (boundary_pos != std::string::npos){
@@ -74,7 +74,7 @@ int handle_multipart(const std::string& content, request& req) {
               std::size_t data_start = part.find("\r\n\r\n");
               if (data_start != std::string::npos) {
                 std::string filedata = part.substr(data_start + 4, part.length() - (data_start + 4) - 2);
-                std::string filepath = "./uploads/" + filename;
+                std::string filepath = currentServer.uploaddir() + filename;
                 std::ofstream outfile(filepath.c_str());
                 outfile << filedata;
                 outfile.close();
@@ -89,7 +89,7 @@ int handle_multipart(const std::string& content, request& req) {
                 if (data_start != std::string::npos) {
                   std::string fielddata = part.substr(data_start + 4, part.length() - (data_start + 4) - 2);
                   std::string stored_data = "Field Name: " + name + ", Value: " + fielddata + "\n";
-                  std::ofstream outfile("./uploads/form_fields.txt");
+                  std::ofstream outfile((currentServer.uploaddir() + "form_fields.txt").c_str());
                   outfile << stored_data;
                   outfile.close();
                 }
@@ -110,15 +110,35 @@ int handle_multipart(const std::string& content, request& req) {
   return 0;
 }
 
-void handle_json(const std::string& content) {
-  std::ofstream outfile("./uploads/data.json");
+void handle_json(const std::string& content , ctr& currentServer) {
+  std::ofstream outfile( (currentServer.uploaddir() + "data.json").c_str());
   outfile << content;
   outfile.close();
 }
 
 
 void methodPost(int client, request& req, ctr& currentServer, long long startRequestTime) {
-  (void)currentServer;
+  // find matching route at config file
+  rt* route = NULL;
+  for (std::size_t i = 0; i < currentServer.length(); i++) {
+    if (currentServer.route(i).path() == req.getPath()) {
+      route = &currentServer.route(i);
+      break;
+    }
+  }
+
+  if (
+    route->method(0) != "POST" &&
+    (route->length() > 1 && route->method(1) != "POST") &&
+    (route->length() > 2 && route->method(2) != "POST")
+  ) {
+    std::map<std::string, std::string> Theaders;
+    Theaders["Allow"] = "GET, POST, DELETE";
+    Theaders["Content-Type"] = "text/html";
+    response(client, startRequestTime, 405, Theaders, "", req, currentServer).sendResponse();
+    return;
+  }
+
   if (req.getBody().empty()) {
     std::map<std::string, std::string> headers;
     std::string body = "";
@@ -142,7 +162,7 @@ void methodPost(int client, request& req, ctr& currentServer, long long startReq
     else if (contentType.find("multipart/form-data") != std::string::npos)
     {
       std::string contentbody = req.getBody();
-      if (handle_multipart(contentbody, req) == -1) {
+      if (handle_multipart(contentbody, req, currentServer) == -1) {
         std::map<std::string, std::string> headers;
         std::string body = "";
         response(client, startRequestTime, 400, headers, body, req, currentServer).sendResponse();
@@ -164,7 +184,7 @@ void methodPost(int client, request& req, ctr& currentServer, long long startReq
     else if (contentType.find("application/json") != std::string::npos)
     {
       std::string content = req.getBody();
-      handle_json(content);
+      handle_json(content, currentServer);
       std::map<std::string, std::string> headers;
       std::string body = "JSON Data received:\n" + content;
       response(client, startRequestTime, 200, headers, body, req, currentServer).sendResponse();
@@ -179,8 +199,7 @@ void methodPost(int client, request& req, ctr& currentServer, long long startReq
   }
   else {
     std::map<std::string, std::string> headers;
-    std::string body = "";
-    response(client, startRequestTime, 411, headers, body, req, currentServer).sendResponse();
+    response(client, startRequestTime, 411, headers, "", req, currentServer).sendResponse();
     return;
   }
 }
