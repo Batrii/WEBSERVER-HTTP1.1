@@ -25,6 +25,10 @@
           "path": "/delete",
           "source": "./delete/index.html",
           "method": ["GET", "DELETE"]
+        },
+        {
+          "path": "/list",
+          "dictlist": "true"
         }
       ]
     }

@@ -62,7 +62,7 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
       return;
     }
 
-      if (route->cgiScript().empty() && route->dictlist() == false && route->redirect().empty()) {
+    if (route->cgiScript().empty() && route->dictlist() == false && route->redirect().empty()) {
       // Automatic index resolution for GET `server.index()`
       // check if file exists
       struct stat fileStat;
@@ -91,7 +91,23 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
 
   // handle dictlist
   if (route && route->dictlist()) {
-    return;
+
+    struct stat fileStat;
+    if (stat(sourcePathToHandle.c_str(), &fileStat) != 0 || permission::check(sourcePathToHandle)) {
+      // 404 not found
+      std::map<std::string, std::string> Theaders;
+      Theaders["Content-Type"] = "text/html";
+      response(client, startRequestTime, 404, Theaders, "", req, currentServer).sendResponse();
+      return;
+    }
+
+    // check if it's a directory
+    if (S_ISDIR(fileStat.st_mode)) {
+
+      ;
+
+      return;
+    }
   }
 
   // handle cgi execution
