@@ -22,6 +22,18 @@
           "path": "/delete/2",
           "source": "/delete/test2.html",
           "method": ["GET", "DELETE"]
+        },
+        {
+          "path": "/redirection/1",
+          "redirect": "/redirection/3"
+        },
+        {
+          "path": "/redirection/2",
+          "redirect": "https://www.youtube.com/watch?v=hTWKbfoikeg&list=RDhTWKbfoikeg&start_radio=1"
+        },
+        {
+          "path": "/redirection/3",
+          "source": "/redirection/file.html"
         }
       ]
     }

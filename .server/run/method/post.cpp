@@ -53,7 +53,7 @@ void methodPost(int client, request& req, ctr& currentServer, long long startReq
   if (req.getBody().empty()) {
     std::map<std::string, std::string> headers;
     std::string body = "";
-    response res(client, startRequestTime, 400, headers, body, req);
+    response res(client, startRequestTime, 400, headers, body, req, currentServer);
     res.sendResponse();
     return;
   }
@@ -67,7 +67,7 @@ void methodPost(int client, request& req, ctr& currentServer, long long startReq
       urlencoder.parseBodyContent(contentstored);
       std::map<std::string, std::string> headers;
       std::string body = "Data received:\n" + contentstored;
-      response(client, startRequestTime, 200, headers, body, req).sendResponse();
+      response(client, startRequestTime, 200, headers, body, req, currentServer).sendResponse();
       return;
     }
     else if (contentType.find("multipart/form-data") != std::string::npos)
@@ -77,7 +77,7 @@ void methodPost(int client, request& req, ctr& currentServer, long long startReq
       std::string contentstored = req.getBody();
       std::map<std::string, std::string> headers;
       std::string body = "Data received:\n" + contentstored;
-      response(client, startRequestTime, 200, headers, body, req).sendResponse();
+      response(client, startRequestTime, 200, headers, body, req, currentServer).sendResponse();
       return;
     }
     else if (contentType.find("application/json") != std::string::npos)
@@ -85,14 +85,14 @@ void methodPost(int client, request& req, ctr& currentServer, long long startReq
     else {
       std::map<std::string, std::string> headers;
       std::string body = "";
-      response(client, startRequestTime, 415, headers, body, req).sendResponse();
+      response(client, startRequestTime, 415, headers, body, req, currentServer).sendResponse();
       return;
     }
   }
   else {
     std::map<std::string, std::string> headers;
     std::string body = "";
-    response res(client, startRequestTime, 411, headers, body, req);
+    response res(client, startRequestTime, 411, headers, body, req, currentServer);
     res.sendResponse();
     return;
   }
