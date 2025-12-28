@@ -14,26 +14,17 @@
       "root": "./",
       "routes": [
         {
-          "path": "/delete/1",
-          "source": "/delete/test1.mp4",
-          "method": ["GET", "DELETE"]
+          "path": "/redirect/1",
+          "redirect": "/redirect/2"
         },
         {
-          "path": "/delete/2",
-          "source": "/delete/test2.html",
-          "method": ["GET", "DELETE"]
-        },
-        {
-          "path": "/redirection/1",
-          "redirect": "/redirection/3"
-        },
-        {
-          "path": "/redirection/2",
+          "path": "/redirect/2",
           "redirect": "https://www.youtube.com/watch?v=hTWKbfoikeg&list=RDhTWKbfoikeg&start_radio=1"
         },
         {
-          "path": "/redirection/3",
-          "source": "/redirection/file.html"
+          "path": "/delete",
+          "source": "./delete/index.html",
+          "method": ["GET", "DELETE"]
         }
       ]
     }
