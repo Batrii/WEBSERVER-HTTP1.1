@@ -32,7 +32,8 @@ class response {
     )
     : _client(client), _startRequestTime(startRequestTime), _code(code), _headers(headers), _body(body), _request(request), _server(server) {}
 
-    void sendResponse(void) {
+    std::string sendResponse(void) {
+      (void)this->_client; // to avoid unused variable warning
       std::stringstream response;
       response << "HTTP/1.1 " << this->_code << " " << status(this->_code).message() << "\r\n";
 
@@ -40,12 +41,13 @@ class response {
         response << it->first << ": " << it->second << "\r\n";
       }
 
-      response << "\r\n";
+      // Determine the body content
+      std::string bodyContent;
       if (
         (!this->_body.empty()) || (this->_code >= 100 && this->_code < 200) ||
         (this->_code >= 200 && this->_code < 300)
       ) {
-        response << this->_body;
+        bodyContent = this->_body;
       }
       else if ((this->_code >= 300 && this->_code < 400) || (this->_code >= 400 && this->_code < 600)) {
         std::string errorPage = error(this->_code).page();
@@ -62,49 +64,15 @@ class response {
           }
         }
 
-        response << errorPage;
+        bodyContent = errorPage;
       }
 
-      send(this->_client, response.str().c_str(), response.str().length(), 0);
-      console.METHODS(this->_request.getMethod(), this->_request.getPath(), this->_code, time::calcl(this->_startRequestTime, time::clock()));
-    }
-
-    void sendGETchunks(std::string file) {
-      std::fstream fileToOpen(file.c_str());
-      if (!fileToOpen) {
-        this->_code = 404;
-        this->sendResponse();
-        return;
-      }
-
-      fileToOpen.seekg(0, std::ios::end);
-      size_t fileSize = fileToOpen.tellg();
-      fileToOpen.seekg(0, std::ios::beg);
-
-      std::stringstream response;
-      response << "HTTP/1.1 200 OK\r\n";
-      response << "Content-Length: " << fileSize << "\r\n";
-
-      for (std::map<std::string, std::string>::iterator it = this->_headers.begin(); it != this->_headers.end(); it++) {
-        response << it->first << ": " << it->second << "\r\n";
-      }
-
+      // Add Content-Length header
+      response << "Content-Length: " << bodyContent.length() << "\r\n";
       response << "\r\n";
-      send(this->_client, response.str().c_str(), response.str().length(), 0);
+      response << bodyContent;
 
-      const size_t CHUNK_SIZE = 8192; // 8KB
-      char buffer[CHUNK_SIZE];
-    
-      while (fileToOpen.read(buffer, CHUNK_SIZE) || fileToOpen.gcount() > 0) {
-        if (time::calcl(this->_startRequestTime, time::clock()) > static_cast<long long>(this->_server.timeout())) {
-          fileToOpen.close();
-          console.METHODS(this->_request.getMethod(), this->_request.getPath(), 408, time::calcl(this->_startRequestTime, time::clock()));
-          return;
-        }
-        send(this->_client, buffer, fileToOpen.gcount(), 0);
-      }
-
-      fileToOpen.close();
-      console.METHODS(this->_request.getMethod(), this->_request.getPath(), 200, time::calcl(this->_startRequestTime, time::clock()));
+      console.METHODS(this->_request.getMethod(), this->_request.getPath(), this->_code, time::calcl(this->_startRequestTime, time::clock()));
+      return response.str();
     }
 };
