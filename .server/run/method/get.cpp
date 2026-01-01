@@ -15,6 +15,18 @@
 #include <string>
 #include <dirent.h>
 #include <sys/wait.h>
+#include <cstdlib>
+
+std::string generate_session_id(size_t length)
+{
+    static const char hex[] = "0123456789abcdef";
+    std::string id;
+    for (size_t i = 0; i < length; ++i)
+    {
+        id += hex[std::rand() % 16];
+    }
+    return id;
+}
 
 void methodGet(int client, request& req, ctr& currentServer, long long startRequestTime) {
 
@@ -28,6 +40,9 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
   }
 
   std::string sourcePathToHandle;
+  // check if we have a cookie for sestion management
+  std::map<std::string, std::string> headers = req.getHeaders();
+  std::map<std::string, std::string>::iterator it = headers.find("Cookie");
 
   if (!route) {
     // absolute path
@@ -202,7 +217,7 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
       else if (WIFSIGNALED(status))
         code = WTERMSIG(status);
 
-      if (status != 0) {
+      if (code != 0) {
         // 500 internal server error
         std::map<std::string, std::string> Theaders;
         Theaders["Content-Type"] = "text/html";
