@@ -209,15 +209,15 @@ void methodGet(int client, request& req, ctr& currentServer, long long startRequ
       // parent process
       close(pipeFD[1]); // close write end
       int status = 0;
-      // int code = 0;
+      int code = 0;
       waitpid(pid, &status, 0); // wait for child process
 
-      // if (WIFEXITED(status))
-      //   code = WEXITSTATUS(status);
-      // else if (WIFSIGNALED(status))
-      //   code = WTERMSIG(status);
+      if (WIFEXITED(status))
+        code = WEXITSTATUS(status);
+      else if (WIFSIGNALED(status))
+        code = WTERMSIG(status);
 
-      if (status != 0) {
+      if (code != 0) {
         // 500 internal server error
         std::map<std::string, std::string> Theaders;
         Theaders["Content-Type"] = "text/html";
