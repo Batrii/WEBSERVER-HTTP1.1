@@ -133,7 +133,6 @@ std::string methodGet(int client, request& req, ctr& currentServer, long long st
   }
 
   // Read the file content
-    struct stat fileStat;
   if (stat(sourcePathToHandle.c_str(), &fileStat) != 0) {
     std::map<std::string, std::string> Theaders;
     Theaders["Content-Type"] = "text/html";
