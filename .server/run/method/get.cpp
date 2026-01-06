@@ -15,8 +15,13 @@
 #include <string>
 #include <dirent.h>
 #include <sys/wait.h>
+#include <client.hpp>
+#include <fcntl.h>
 
-std::string methodGet(int client, request& req, ctr& currentServer, long long startRequestTime) {
+
+#define FILE_STREAM_THRESHOLD 1048576 //1Mb
+
+std::string methodGet(int client, request& req, ctr& currentServer, long long startRequestTime, Client &clientObj) {
 
   // find matching route at config file
   rt* route = NULL;
@@ -229,6 +234,47 @@ std::string methodGet(int client, request& req, ctr& currentServer, long long st
   }
 
   // Read the file content
+    struct stat fileStat;
+  if (stat(sourcePathToHandle.c_str(), &fileStat) != 0) {
+    std::map<std::string, std::string> Theaders;
+    Theaders["Content-Type"] = "text/html";
+    return response(client, startRequestTime, 404, Theaders, "", req, currentServer).sendResponse();
+  }
+
+  // For large files (> 1MB), use streaming
+  if (fileStat.st_size > FILE_STREAM_THRESHOLD) {
+    // Open file for streaming
+    int fd = open(sourcePathToHandle.c_str(), O_RDONLY);
+    if (fd < 0) {
+      std::map<std::string, std::string> Theaders;
+      Theaders["Content-Type"] = "text/html";
+      return response(client, startRequestTime, 500, Theaders, "", req, currentServer).sendResponse();
+    }
+
+    // Set non-blocking mode
+    fcntl(fd, F_SETFL, O_NONBLOCK);
+
+    // Setup client for streaming
+    clientObj.fd_file = fd;
+    clientObj.file_size = fileStat.st_size;
+    clientObj.file_offset = 0;
+    clientObj.header_sent = false;
+    clientObj.is_streaming = true;
+
+    // Build HTTP headers only (body will be streamed)
+    std::stringstream headers;
+    headers << "HTTP/1.1 200 OK\r\n";
+    headers << "Content-Type: " << type::get(sourcePathToHandle) << "\r\n";
+    headers << "Content-Length: " << fileStat.st_size << "\r\n";
+    headers << "Accept-Ranges: bytes\r\n";
+    headers << "Connection: close\r\n";
+    headers << "\r\n";
+
+    console.METHODS(req.getMethod(), req.getPath(), 200, time::calcl(startRequestTime, time::clock()));
+    // std::map<std::string, std::string> Theaders;
+    // Theaders["Content-Type"] = type::get(sourcePathToHandle);
+    return headers.str();
+  }
   std::ifstream file(sourcePathToHandle.c_str(), std::ios::binary);
   if (!file.is_open()) {
     std::map<std::string, std::string> Theaders;
