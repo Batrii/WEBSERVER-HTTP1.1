@@ -80,6 +80,21 @@ int handle_read_event(int client, ctr& currentServer, struct epoll_event& ev, Cl
     else if (clientObj.header_complete == true && clientObj.body_complete == true) {
         request req(clientObj._request_data);
         long long startRequestTime = time::clock();
+        if (req.getBadRequest() != 0) {
+            // Handle bad request
+            std::map<std::string, std::string> Theaders;
+            Theaders["Content-Type"] = "text/html";
+            std::string responseStr = response(client, startRequestTime, req.getBadRequest(), Theaders, "", req, currentServer).sendResponse();
+            clientObj.response = responseStr;
+            // Modify epoll to watch for write events
+            ev.events = EPOLLOUT;
+            if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client, &ev) < 0) {
+                console.issue("Failed to modify epoll for write event");
+                close(client);
+                return -1;
+            }
+            return 0;
+        }
         std::string response;
         if (req.getMethod() == "GET") {
             response = methodGet(client, req, currentServer, startRequestTime, clientObj);
