@@ -10,9 +10,62 @@
 #include <sstream>
 #include "post_helper.cpp"
 #include <urlencoder.hpp>
+#include <users.hpp>
+#include <client.hpp>
 
-std::string methodPost(int client, request& req, ctr& currentServer, long long startRequestTime) {
+std::string methodPost(int client, request& req, ctr& currentServer, long long startRequestTime, Client &clientObj, UserManager &userManager) {
   // find matching route at config file
+
+  if(!req.getBody().empty() && req.getBody().find("username") != std::string::npos && req.getBody().find("password") != std::string::npos) {
+    std::string username;
+    std::string password;
+    std::string action;
+    std::size_t user_pos = req.getBody().find("username=");
+    std::size_t pass_pos = req.getBody().find("password=");
+    std::size_t pass_end = req.getBody().find("&", pass_pos);
+    if (pass_end == std::string::npos)
+        pass_end = req.getBody().length();
+    std::size_t action_pos = req.getBody().find("action=");
+    std::size_t user_end = req.getBody().find("&", user_pos);
+
+    username = req.getBody().substr(user_pos + 9, user_end - (user_pos + 9));
+    // std::size_t pass_end = req.getBody().length();
+    password = req.getBody().substr(pass_pos + 9, pass_end - (pass_pos + 9));
+
+    if(action_pos != std::string::npos) {
+      std::size_t action_end = req.getBody().length();
+      action = req.getBody().substr(action_pos + 7, action_end - (action_pos + 7));
+    }
+
+    // std::cout << "Login attempt with Username: " << username << " and Password: " << password << std::endl;
+
+    //check if not register request not set 
+    if(action_pos == std::string::npos){
+      std::cout << "hadchy mal\n";
+      if (userManager.checkLogin(username, password)) {
+        std::map<std::string, std::string> headers;
+        headers["location"] = "/profile?success=1";
+        headers["Cache-Control"] = "no-store";
+        // set cookie header !
+        headers["Set-Cookie"] = "sessionid=" + UserManager::generate_session_id(16);
+        clientObj._has_logged_in = true;
+        return response(client, startRequestTime, 302, headers, "", req, currentServer).sendResponse();
+      } else {
+        std::map<std::string, std::string> headers;
+        headers["location"] = "/asset/login.html?error=1";
+        headers["Cache-Control"] = "no-store";
+        return response(client, startRequestTime, 302, headers, "", req, currentServer).sendResponse();
+      }
+    }
+    // handle register request
+    userManager.addUser(username, password);
+    std::map<std::string, std::string> headers;
+    headers["location"] = "/asset/login.html?registered=1";
+    headers["Cache-Control"] = "no-store";
+    // userManager.printUsers();
+    return response(client, startRequestTime, 302, headers, "", req, currentServer).sendResponse();
+  }
+
   rt* route = NULL;
   for (std::size_t i = 0; i < currentServer.length(); i++) {
     if (currentServer.route(i).path() == req.getPath()) {

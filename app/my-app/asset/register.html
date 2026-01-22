@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #16a34a, #111827);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .register-box {
+            background: white;
+            width: 700px;
+            max-width: 90%;
+            display: flex;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .register-image {
+            width: 50%;
+            background: #f5f7fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .register-image img {
+            width: 80%;
+        }
+
+        .register-form {
+            width: 50%;
+            padding: 40px;
+        }
+
+        .register-form h2 {
+            margin-bottom: 20px;
+            color: #16a34a;
+        }
+
+        .register-form label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .register-form input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .register-form button {
+            width: 100%;
+            padding: 12px;
+            background: #16a34a;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .register-form button:hover {
+            background: #12803a;
+        }
+
+        .back-link {
+            display: block;
+            margin-top: 15px;
+            text-align: center;
+            color: #3d6abb;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        @media (max-width: 700px) {
+            .register-image { display: none; }
+            .register-form { width: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="register-box">
+
+    <!-- IMAGE -->
+    <div class="register-image">
+        <img src="https://readymadeui.com/signin-image.webp" alt="Register">
+    </div>
+
+    <!-- FORM -->
+    <div class="register-form">
+        <h2>Create Account</h2>
+
+        <form method="post" action="/register">
+            <label>Username</label>
+            <input type="text" name="username" placeholder="Choose username" required>
+
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Choose password" required>
+
+            <button type="submit">Register</button>
+            <!-- send a flag to server to know that this is register request -->
+            <input type="hidden" name="action" value="register">
+        </form>
+
+        <a href="/asset/login.html" class="back-link">← Back to Login</a>
+    </div>
+</div>
+
+</body>
+</html>

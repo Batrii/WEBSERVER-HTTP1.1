@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom, #3d6abb, #111827);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-box {
+            background: white;
+            width: 700px;
+            max-width: 90%;
+            display: flex;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .login-image {
+            width: 50%;
+            background: #f5f7fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-image img {
+            width: 80%;
+        }
+
+        .login-form {
+            width: 50%;
+            padding: 40px;
+        }
+
+        .login-form h2 {
+            margin-bottom: 20px;
+            color: #3d6abb;
+        }
+
+        .login-form label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .login-form button {
+            width: 100%;
+            padding: 12px;
+            background: #3d6abb;
+            border: none;
+            color: white;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .login-form button:hover {
+            background: #2f5394;
+        }
+
+        .register-link {
+            display: block;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .register-link a {
+            color: #3d6abb;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* POPUPS */
+        .popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 14px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.4s ease;
+            z-index: 1000;
+            color: white;
+        }
+
+        .popup.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .popup.error   { background: #dc2626; }
+        .popup.need    { background: #2563eb; }
+        .popup.success { background: #16a34a; }
+
+        @media (max-width: 700px) {
+            .login-image { display: none; }
+            .login-form { width: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- POPUPS -->
+<div id="error-popup" class="popup error">
+    ❌ Invalid username or password
+</div>
+
+<div id="need-popup" class="popup need">
+    🔒 Please log in to access your profile
+</div>
+
+<div id="logout-popup" class="popup success">
+    ✅ You have been logged out successfully
+</div>
+
+<div id="registered-popup" class="popup success">
+    🎉 Registered successfully! You can now log in.
+</div>
+
+<div class="login-box">
+
+    <!-- IMAGE -->
+    <div class="login-image">
+        <img src="https://readymadeui.com/signin-image.webp" alt="Login">
+    </div>
+
+    <!-- FORM -->
+    <div class="login-form">
+        <h2>Sign In</h2>
+
+        <form method="post" action="/login">
+            <label>Username</label>
+            <input type="text" name="username" placeholder="Enter username" required>
+
+            <label>Password</label>
+            <input type="password" name="password" placeholder="Enter password" required>
+
+            <button type="submit">Login</button>
+        </form>
+
+        <div class="register-link">
+            Don’t have an account?
+            <a href="/asset/register.html">Create one</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+
+    function showPopup(id) {
+        const popup = document.getElementById(id);
+        popup.classList.add("show");
+        setTimeout(() => popup.classList.remove("show"), 4000);
+    }
+
+    if (params.get("error") === "1") {
+        showPopup("error-popup");
+    }
+
+    if (params.get("need_login") === "1") {
+        showPopup("need-popup");
+    }
+
+    if (params.get("logged_out") === "1") {
+        showPopup("logout-popup");
+    }
+
+    // After successful registration:
+    // /asset/login.html?registered=1
+    if (params.get("registered") === "1") {
+        showPopup("registered-popup");
+    }
+</script>
+
+</body>
+</html>

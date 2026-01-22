@@ -14,6 +14,7 @@ OBJECTS  = ./.server/lib/.o \
 		   ./.server/run/method/get.o \
 		   ./.server/run/method/post.o \
 		   ./.server/run/method/delete.o \
+		   ./.server/run/method/run_cgi.o \
 		   ./.server/run/epoll_handle.o
 
 # rules

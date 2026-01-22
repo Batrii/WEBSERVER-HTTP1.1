@@ -21,6 +21,42 @@
 
 #define FILE_STREAM_THRESHOLD 1048576 //1Mb
 
+// add a function to check if the user reqsueted a  profile page while not being logged in
+bool isProfilePageRequestWithoutLogin(request& req, Client& clientObj) {
+  if (req.getPath() == "/profile" && clientObj._has_logged_in == false) {
+    return true;
+  }
+  return false;
+}
+
+// add a function to check if the user requested the login page while already being logged in
+bool isLoginPageRequest_but_already_Login(request& req, Client& clientObj) {
+  if (req.getPath() == "/login" && clientObj._has_logged_in == true) {
+    return true;
+  }
+  return false;
+}
+
+// add function to check if the cookie header is messing when the user is logged in
+bool isCookieHeaderMissingWhenLoggedIn(request& req, Client& clientObj) {
+  
+  std::map<std::string, std::string> headers = req.getHeaders();
+  // check if we have a cokie header when the user is logged in
+  if(req.getPath() == "/profile" && headers.find("Cookie") == headers.end() && clientObj._has_logged_in == true) {
+      clientObj._has_logged_in = false; //force logout
+      return true;
+  }
+  return false;
+}
+
+bool requestforlogout(request& req, Client& clientObj) {
+  if (req.getPath() == "/logout") {
+    clientObj._has_logged_in = false;
+    return true;
+  }
+  return false;
+}
+
 std::string methodGet(int client, request& req, ctr& currentServer, long long startRequestTime, Client &clientObj) {
 
   // find matching route at config file
@@ -37,7 +73,15 @@ std::string methodGet(int client, request& req, ctr& currentServer, long long st
   if (!route) {
     // absolute path
     sourcePathToHandle = currentServer.root() + req.getPath();
-
+    // Automatic index resolution for GET `server.index()`
+    //check if the user wants to logout !
+    if(requestforlogout(req, clientObj)) {
+      std::map<std::string, std::string> headers;
+      headers["location"] = "/login?logged_out=1";
+      headers["Set-Cookie"] = "sessionid=;";
+      headers["Cache-Control"] = "no-store";
+      return response(client, startRequestTime, 302, headers, "", req, currentServer).sendResponse();
+    }
     // check if file exists
     struct stat fileStat;
     if (stat(sourcePathToHandle.c_str(), &fileStat) != 0 || permission::check(sourcePathToHandle)) {
@@ -117,21 +161,7 @@ std::string methodGet(int client, request& req, ctr& currentServer, long long st
     }
   }
 
-  // handle cgi execution (use original method - CGI is typically small)
-  // if (route && !route->cgiScript().empty()) {
-  //   return methodGet(client, req, currentServer, startRequestTime);
-  // }
-
-  // =========================================================================
-  // FILE SERVING - Check if file should be streamed
-  // =========================================================================
   struct stat fileStat;
-  if (stat(sourcePathToHandle.c_str(), &fileStat) != 0) {
-    std::map<std::string, std::string> Theaders;
-    Theaders["Content-Type"] = "text/html";
-    return response(client, startRequestTime, 404, Theaders, "", req, currentServer).sendResponse();
-  }
-
   // Read the file content
   if (stat(sourcePathToHandle.c_str(), &fileStat) != 0) {
     std::map<std::string, std::string> Theaders;
@@ -179,16 +209,27 @@ std::string methodGet(int client, request& req, ctr& currentServer, long long st
   fileContent << file.rdbuf();
   file.close();
 
+  if(isProfilePageRequestWithoutLogin(req, clientObj)) {
+    std::map<std::string, std::string> headers;
+    headers["location"] = "/login?need_login=1";
+    headers["Cache-Control"] = "no-store";
+    return response(client, startRequestTime, 302, headers, "", req, currentServer).sendResponse();
+  }
+  if(isCookieHeaderMissingWhenLoggedIn(req, clientObj)) {
+    // std::cout << "Forcing logout due to missing Cookie header." << std::endl;
+    std::map<std::string, std::string> headers;
+    headers["location"] = "/login?need_login=1";
+    headers["Cache-Control"] = "no-store";
+    return response(client, startRequestTime, 302, headers, "", req, currentServer).sendResponse();
+  }
+  if(isLoginPageRequest_but_already_Login(req, clientObj)) {
+    std::map<std::string, std::string> headers;
+    headers["location"] = "/profile?already_logged_in=1";
+    headers["Cache-Control"] = "no-store";
+    return response(client, startRequestTime, 302, headers, "", req, currentServer).sendResponse();
+  }
+
   std::map<std::string, std::string> Theaders;
   Theaders["Content-Type"] = type::get(sourcePathToHandle);
   return response(client, startRequestTime, 200, Theaders, fileContent.str(), req, currentServer).sendResponse();
 }
-// add some variables to the client.hpp to store file descriptor of the big file
-// response will be just the headers
-// then the file descriptor of the opened file
-// and the current position in the file to be sent in the next write event
-// and flags to indicate if the headers have been sent or not
-// badr work -----------------------------------------------
-// then modify the handle_write_event function to check if there is a file to be sent
-// if there is, read a chunk of the file and send it to the client
-// if the whole file has been sent, close the file descriptor and reset the variables 
