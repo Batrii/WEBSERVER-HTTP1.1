@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>WEBSERVER</title>
+	<style>
+		:root {
+			--bg: #111827;
+			--panel: #1f2937;
+			--muted: #9ca3af;
+			--text: #ffffff;
+
+			--primary: #14284d;
+			--primaryHover: #2f5394;
+			--success: #16a34a;
+			--info: #2563eb;
+			--danger: #dc2626;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			font-family: Arial, sans-serif;
+			color: var(--text);
+			background: linear-gradient(to bottom, var(--primary), var(--bg));
+			min-height: 100vh;
+		}
+
+		.wrap {
+			width: 1100px;
+			max-width: calc(100% - 32px);
+			margin: 0 auto;
+			padding: 48px 0;
+		}
+
+		.top {
+			display: flex;
+			align-items: flex-start;
+			justify-content: space-between;
+			gap: 20px;
+			margin-bottom: 18px;
+		}
+
+		.brand {
+			margin: 0;
+			font-size: 34px;
+			line-height: 1.1;
+			letter-spacing: 0.4px;
+		}
+
+		.subtitle {
+			margin: 10px 0 0 0;
+			color: rgba(255, 255, 255, 0.85);
+			max-width: 760px;
+			line-height: 1.6;
+			font-size: 15px;
+		}
+
+		.panel {
+			background: rgba(31, 41, 55, 0.92);
+			border-radius: 14px;
+			box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+			overflow: hidden;
+			border: 1px solid rgba(255, 255, 255, 0.08);
+		}
+
+		.panelHeader {
+			padding: 18px 22px;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+		}
+
+		.panelHeader h2 {
+			margin: 0;
+			font-size: 16px;
+			letter-spacing: 0.2px;
+		}
+
+		.badges {
+			display: flex;
+			gap: 8px;
+			flex-wrap: wrap;
+			justify-content: flex-end;
+		}
+
+		.badge {
+			font-size: 12px;
+			color: rgba(255, 255, 255, 0.9);
+			padding: 6px 10px;
+			border-radius: 999px;
+			background: rgba(255, 255, 255, 0.10);
+			border: 1px solid rgba(255, 255, 255, 0.10);
+			white-space: nowrap;
+		}
+
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(12, 1fr);
+			gap: 14px;
+			padding: 18px;
+		}
+
+		.card {
+			grid-column: span 6;
+			background: rgba(17, 24, 39, 0.35);
+			border: 1px solid rgba(255, 255, 255, 0.08);
+			border-radius: 12px;
+			padding: 16px;
+		}
+
+		.card h3 {
+			margin: 0 0 8px 0;
+			font-size: 15px;
+		}
+
+		.card p {
+			margin: 0 0 12px 0;
+			color: var(--muted);
+			font-size: 13px;
+			line-height: 1.5;
+		}
+
+		.actions {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 10px;
+		}
+
+		.btn {
+			display: inline-block;
+			text-decoration: none;
+			color: white;
+			padding: 10px 12px;
+			border-radius: 10px;
+			border: 1px solid rgba(255, 255, 255, 0.10);
+			background: rgba(255, 255, 255, 0.10);
+			font-size: 13px;
+			font-weight: bold;
+			letter-spacing: 0.2px;
+		}
+
+		.btn:hover {
+			background: rgba(255, 255, 255, 0.16);
+		}
+
+		.btn.primary {
+			background: var(--primary);
+			border-color: rgba(255, 255, 255, 0.18);
+		}
+
+		.btn.primary:hover {
+			background: var(--primaryHover);
+		}
+
+		.btn.success {
+			background: var(--success);
+			border-color: rgba(255, 255, 255, 0.18);
+		}
+
+		.btn.info {
+			background: var(--info);
+			border-color: rgba(255, 255, 255, 0.18);
+		}
+
+		.btn.danger {
+			background: var(--danger);
+			border-color: rgba(255, 255, 255, 0.18);
+		}
+
+		.note {
+			padding: 0 18px 18px 18px;
+			color: rgba(255, 255, 255, 0.85);
+			font-size: 13px;
+			line-height: 1.6;
+		}
+
+		code {
+			background: rgba(0, 0, 0, 0.25);
+			padding: 2px 6px;
+			border-radius: 6px;
+			border: 1px solid rgba(255, 255, 255, 0.10);
+		}
+
+		.footer {
+			margin-top: 18px;
+			color: rgba(255, 255, 255, 0.75);
+			font-size: 12px;
+			text-align: center;
+		}
+
+		@media (max-width: 860px) {
+			.top {
+				flex-direction: column;
+			}
+			.badges {
+				justify-content: flex-start;
+			}
+			.card {
+				grid-column: span 12;
+			}
+		}
+	</style>
+</head>
+
+<body>
+	<div class="wrap">
+		<div class="top">
+			<div>
+				<h1 class="brand">WEBSERVER HTTP/1.1</h1>
+				<p class="subtitle">
+					A lightweight HTTP/1.1 web server built around Linux <code>epoll</code> and non-blocking I/O,
+					serving static files and running CGI scripts.
+				</p>
+			</div>
+
+			<div class="badges" aria-label="Project highlights">
+				<span class="badge">HTTP/1.1</span>
+				<span class="badge">epoll</span>
+				<span class="badge">Non-blocking</span>
+				<span class="badge">Static files</span>
+				<span class="badge">CGI</span>
+			</div>
+		</div>
+
+		<div class="panel">
+			<div class="panelHeader">
+				<h2>Quick Start</h2>
+				<div class="badges" aria-label="Quick links">
+					<a class="btn primary" href="/login">Login</a>
+					<a class="btn success" href="/register">Register</a>
+					<a class="btn info" href="/profile">User Page</a>
+				</div>
+			</div>
+
+			<div class="grid">
+				<div class="card">
+					<h3>Authentication</h3>
+					<p>Use the UI forms that POST to <code>/login</code> and <code>/register</code>.</p>
+					<div class="actions">
+						<a class="btn primary" href="/asset/login.html">Open Login</a>
+						<a class="btn success" href="/asset/register.html">Open Register</a>
+					</div>
+				</div>
+
+				<div class="card">
+					<h3>Static Content</h3>
+					<p>Simple pages and directories to verify routing, index files, and file serving.</p>
+					<div class="actions">
+						<a class="btn" href="/list/hello.html">/list/hello.html</a>
+						<a class="btn" href="/list/folder/">/list/folder/</a>
+						<a class="btn danger" href="/delete/">/delete/</a>
+					</div>
+				</div>
+
+				<div class="card">
+					<h3>CGI (Python / PHP)</h3>
+					<p>Run a Python script and a PHP script from the server's CGI handler.</p>
+					<div class="actions">
+						<a class="btn info" href="/cgi/helloworld.py">/cgi/helloworld.py</a>
+						<a class="btn info" href="/cgi/blogs.php">/cgi/blogs.php</a>
+					</div>
+				</div>
+
+				<div class="card">
+					<h3>Assets</h3>
+					<p>Media files that help test binary/static responses.</p>
+					<div class="actions">
+						<a class="btn" href="/asset/picture1.jpg">picture1.jpg</a>
+						<a class="btn" href="/asset/picture2.jpg">picture2.jpg</a>
+						<a class="btn" href="/asset/video1.webm">video1.webm</a>
+					</div>
+				</div>
+			</div>
+
+			<div class="note">
+				Tip: if you’re testing from a browser, open DevTools → Network to confirm status codes,
+				headers, and keep-alive behavior. For CGI, you may want your scripts to print proper HTTP
+				headers (e.g., <code>Content-Type</code>) depending on how your server wraps CGI output.
+			</div>
+		</div>
+
+		<div class="footer">
+			Served from <code>/app/my-app/index.html</code>
+		</div>
+	</div>
+</body>
+
+</html>

@@ -22,6 +22,18 @@
           "redirect": "https://www.youtube.com/watch?v=hTWKbfoikeg&list=RDhTWKbfoikeg&start_radio=1"
         },
         {
+          "path": "/profile",
+          "source": "./users_page/Guest.html"
+        },
+        {
+          "path": "/register",
+          "source": "./asset/register.html"
+        },
+        {
+          "path": "/login",
+          "source": "./asset/login.html"
+        },
+        {
           "path": "/delete",
           "source": "./delete/index.html",
           "method": [
@@ -60,6 +72,12 @@
           "cgi_script": "./cgi/blogs.php",
           "cgi_interpreter": "/usr/bin/php",
           "cgi_timeout": "240"
+        },
+        {
+          "path": "/hello",
+          "cgi_script": "./cgi/hello.py",
+          "cgi_interpreter": "/usr/bin/python3",
+          "cgi_timeout": "10"
         }
       ]
     }

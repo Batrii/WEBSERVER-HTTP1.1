@@ -9,9 +9,10 @@
 #include <request.hpp>
 #include <cstdlib>
 #include <time.hpp>
+#include <users.hpp>
 #include <client.hpp>
 class client;
 
-int handle_read_event(int client, ctr& currentServer, struct epoll_event& ev, Client& clientObj, std::vector<int>& server_sockets, int epoll_fd);
+int handle_read_event(int client, ctr& currentServer, struct epoll_event& ev, Client& clientObj, std::vector<int>& server_sockets, int epoll_fd, UserManager &users, std::map<int, int>& cgi_fds);
 int handle_write_event(int client, ctr& currentServer, struct epoll_event& ev, Client& clientObj, std::vector<int>& server_sockets, int epoll_fd);
 int is_req_complete(const std::string& request);

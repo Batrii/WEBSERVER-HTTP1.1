@@ -21,6 +21,42 @@
 
 #define FILE_STREAM_THRESHOLD 1048576 //1Mb
 
+// add a function to check if the user reqsueted a  profile page while not being logged in
+bool isProfilePageRequestWithoutLogin(request& req, Client& clientObj) {
+  if (req.getPath() == "/profile" && clientObj._has_logged_in == false) {
+    return true;
+  }
+  return false;
+}
+
+// add a function to check if the user requested the login page while already being logged in
+bool isLoginPageRequest_but_already_Login(request& req, Client& clientObj) {
+  if (req.getPath() == "/login" && clientObj._has_logged_in == true) {
+    return true;
+  }
+  return false;
+}
+
+// add function to check if the cookie header is messing when the user is logged in
+bool isCookieHeaderMissingWhenLoggedIn(request& req, Client& clientObj) {
+  
+  std::map<std::string, std::string> headers = req.getHeaders();
+  // check if we have a cokie header when the user is logged in
+  if(req.getPath() == "/profile" && headers.find("Cookie") == headers.end() && clientObj._has_logged_in == true) {
+      clientObj._has_logged_in = false; //force logout
+      return true;
+  }
+  return false;
+}
+
+bool requestforlogout(request& req, Client& clientObj) {
+  if (req.getPath() == "/logout") {
+    clientObj._has_logged_in = false;
+    return true;
+  }
+  return false;
+}
+
 std::string methodGet(int client, request& req, ctr& currentServer, long long startRequestTime, Client &clientObj) {
 
   // find matching route at config file
@@ -38,7 +74,14 @@ std::string methodGet(int client, request& req, ctr& currentServer, long long st
     // absolute path
     sourcePathToHandle = currentServer.root() + req.getPath();
     // Automatic index resolution for GET `server.index()`
-
+    //check if the user wants to logout !
+    if(requestforlogout(req, clientObj)) {
+      std::map<std::string, std::string> headers;
+      headers["location"] = "/login?logged_out=1";
+      headers["Set-Cookie"] = "sessionid=;";
+      headers["Cache-Control"] = "no-store";
+      return response(client, startRequestTime, 302, headers, "", req, currentServer).sendResponse();
+    }
     // check if file exists
     struct stat fileStat;
     if (stat(sourcePathToHandle.c_str(), &fileStat) != 0 || permission::check(sourcePathToHandle)) {
@@ -130,109 +173,6 @@ std::string methodGet(int client, request& req, ctr& currentServer, long long st
     }
   }
 
-  // handle cgi execution
-  if (route && !route->cgiScript().empty()) {
-
-    if (route->cgiInterpreter().empty()) {
-      // 500 internal server error
-      std::map<std::string, std::string> Theaders;
-      Theaders["Content-Type"] = "text/html";
-      return response(client, startRequestTime, 500, Theaders, "", req, currentServer).sendResponse();
-    }
-
-    if (permission::check(route->cgiScript())) {
-      // 404 not found
-      std::map<std::string, std::string> Theaders;
-      Theaders["Content-Type"] = "text/html";
-      return response(client, startRequestTime, 404, Theaders, "", req, currentServer).sendResponse();
-    }
-
-    // check if it's a directory
-    struct stat fileStat;
-    if (stat(route->cgiScript().c_str(), &fileStat) != 0 || S_ISDIR(fileStat.st_mode)) {
-      // 404 not found
-      std::map<std::string, std::string> Theaders;
-      Theaders["Content-Type"] = "text/html";
-      return response(client, startRequestTime, 404, Theaders, "", req, currentServer).sendResponse();
-    }
-
-    int pipeFD[2];
-    if (pipe(pipeFD) == -1) {
-      // 500 internal server error
-      std::map<std::string, std::string> Theaders;
-      Theaders["Content-Type"] = "text/html";
-      return response(client, startRequestTime, 500, Theaders, "", req, currentServer).sendResponse();
-    }
-
-    pid_t pid = fork();
-    if (pid < 0) {
-      // 500 internal server error
-      std::map<std::string, std::string> Theaders;
-      Theaders["Content-Type"] = "text/html";
-      return response(client, startRequestTime, 500, Theaders, "", req, currentServer).sendResponse();
-    }
-
-    if (pid == 0) {
-      // child process
-      close(pipeFD[0]); // close read end
-      dup2(pipeFD[1], 1); // redirect stdout to pipe write end
-      extern char** environ;
-      char* argv[3];
-      argv[0] = const_cast<char*>(route->cgiInterpreter().c_str());
-      argv[1] = const_cast<char*>(route->cgiScript().c_str());
-      argv[2] = NULL;
-      execve(argv[0], argv, environ);
-      _exit(127);
-    } else {
-
-      // parent process
-      close(pipeFD[1]); // close write end
-      int status = 0;
-      int code = 0;
-      waitpid(pid, &status, 0); // wait for child process
-
-      if (WIFEXITED(status))
-        code = WEXITSTATUS(status);
-      else if (WIFSIGNALED(status))
-        code = WTERMSIG(status);
-
-      if (status != 0) {
-        // 500 internal server error
-        std::map<std::string, std::string> Theaders;
-        Theaders["Content-Type"] = "text/html";
-        return response(client, startRequestTime, 500, Theaders, "", req, currentServer).sendResponse();
-      }
-
-      char buffer[1024];
-      std::stringstream cgiOutput;
-      ssize_t bytesRead;
-      while ((bytesRead = read(pipeFD[0], buffer, sizeof(buffer))) > 0) {
-        cgiOutput.write(buffer, bytesRead);
-      }
-      close(pipeFD[0]); // close read end
-
-      if (bytesRead < 0) {
-        // 500 internal server error
-        std::map<std::string, std::string> Theaders;
-        Theaders["Content-Type"] = "text/html";
-        return response(client, startRequestTime, 500, Theaders, "", req, currentServer).sendResponse();
-      }
-
-      if (route->cgiTimeout() > 0 && time::calcl(startRequestTime, time::clock()) > static_cast<long long>(route->cgiTimeout())) {
-        // 504 gateway timeout
-        std::map<std::string, std::string> Theaders;
-        Theaders["Content-Type"] = "text/html";
-        return response(client, startRequestTime, 504, Theaders, "", req, currentServer).sendResponse();
-      }
-
-      std::map<std::string, std::string> Theaders;
-      Theaders["Content-Type"] = "text/html";
-      return response(client, startRequestTime, 200, Theaders, cgiOutput.str(), req, currentServer).sendResponse();
-    }
-
-    return "";
-  }
-
   // Read the file content
     struct stat fileStat;
   if (stat(sourcePathToHandle.c_str(), &fileStat) != 0) {
@@ -281,16 +221,27 @@ std::string methodGet(int client, request& req, ctr& currentServer, long long st
   fileContent << file.rdbuf();
   file.close();
 
+  if(isProfilePageRequestWithoutLogin(req, clientObj)) {
+    std::map<std::string, std::string> headers;
+    headers["location"] = "/login?need_login=1";
+    headers["Cache-Control"] = "no-store";
+    return response(client, startRequestTime, 302, headers, "", req, currentServer).sendResponse();
+  }
+  if(isCookieHeaderMissingWhenLoggedIn(req, clientObj)) {
+    // std::cout << "Forcing logout due to missing Cookie header." << std::endl;
+    std::map<std::string, std::string> headers;
+    headers["location"] = "/login?need_login=1";
+    headers["Cache-Control"] = "no-store";
+    return response(client, startRequestTime, 302, headers, "", req, currentServer).sendResponse();
+  }
+  if(isLoginPageRequest_but_already_Login(req, clientObj)) {
+    std::map<std::string, std::string> headers;
+    headers["location"] = "/profile?already_logged_in=1";
+    headers["Cache-Control"] = "no-store";
+    return response(client, startRequestTime, 302, headers, "", req, currentServer).sendResponse();
+  }
+
   std::map<std::string, std::string> Theaders;
   Theaders["Content-Type"] = type::get(sourcePathToHandle);
   return response(client, startRequestTime, 200, Theaders, fileContent.str(), req, currentServer).sendResponse();
 }
-// add some variables to the client.hpp to store file descriptor of the big file
-// response will be just the headers
-// then the file descriptor of the opened file
-// and the current position in the file to be sent in the next write event
-// and flags to indicate if the headers have been sent or not
-// badr work -----------------------------------------------
-// then modify the handle_write_event function to check if there is a file to be sent
-// if there is, read a chunk of the file and send it to the client
-// if the whole file has been sent, close the file descriptor and reset the variables 

@@ -4,15 +4,38 @@
 #include <client.hpp>
 #include <sys/socket.h>
 #include <response.hpp>
+#include <sys/stat.h>
 #include "required_checks_epoll.cpp"
+#include <run_cgi.hpp>
 
 #define READ_BUFFER_SIZE 4096
 std::string methodGet(int client, request& req, ctr& currentServer, long long startRequestTime, Client &clientObj);
-std::string methodPost(int client, request& req, ctr& currentServer, long long startRequestTime);
+std::string methodPost(int client, request& req, ctr& currentServer, long long startRequestTime, Client &clientObj, UserManager &users);
 std::string methodDelete(int client, request& req, ctr& currentServer, long long startRequestTime);
 
-int handle_read_event(int client, ctr& currentServer, struct epoll_event& ev, Client& clientObj, std::vector<int>& server_sockets, int epoll_fd) {
+// check if we can run CGI !!
+int can_start_cgi(request& req, rt& route) {
+    // check if the route is allow GET and POST 
+    bool method_allowed = false;
+    for (size_t i = 0; i < route.length(); i++) {
+        if (route.method(i) == req.getMethod()) {
+            method_allowed = true;
+            break;
+        }
+    }
+    if (!method_allowed)
+        return 12; // method has ben allowed
+    //check if file exist
+    std::string sourcePathToHandle = route.cgiScript();
+    struct stat fileStat;
+    if (stat(sourcePathToHandle.c_str(), &fileStat) != 0)
+        return 14; // file not found
+    return 0; // all good
+}
+
+int handle_read_event(int client, ctr& currentServer, struct epoll_event& ev, Client& clientObj, std::vector<int>& server_sockets, int epoll_fd, UserManager &users, std::map<int, int>& cgi_fds) {
     (void)server_sockets;
+    // (void)cgi_fds;
     // Implement the logic to handle read events from the client
     ssize_t byte_readed = read(client, clientObj._buffer_read, sizeof(clientObj._buffer_read) - 1);
     if (byte_readed < 0) {
@@ -47,10 +70,65 @@ int handle_read_event(int client, ctr& currentServer, struct epoll_event& ev, Cl
             return 0;
         }
         std::string response;
-        if (req.getMethod() == "GET") {
+        // check for GCI Here
+        rt* route = NULL;
+        for (std::size_t i = 0; i < currentServer.length(); i++) {
+            if (req.getPath() == currentServer.route(i).path()) {
+                route = &currentServer.route(i);
+                break;
+            }
+        }
+        if(route && !route->cgiScript().empty()) {
+            //check if we can start cgi
+            int cgi_check = can_start_cgi(req, *route);
+            if(cgi_check == 12) {
+                // send error response method not allowed 405
+                std::map<std::string, std::string> Theaders;
+                Theaders["Content-Type"] = "text/html";
+                clientObj.response = ::response(client, startRequestTime, 405, Theaders, "", req, currentServer).sendResponse();
+                // switch to write event to send response !
+                ev.events = EPOLLOUT;
+                if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client, &ev) < 0) {
+                    console.issue("Failed to modify epoll for write event");
+                    close(client);
+                    return -1;
+                }
+                return 0;
+            }
+            if(cgi_check == 14) {
+                // send error response file not found 404
+                std::map<std::string, std::string> Theaders;
+                Theaders["Content-Type"] = "text/html";
+                clientObj.response = ::response(client, startRequestTime, 404, Theaders, "", req, currentServer).sendResponse();
+                // switch to write event to send response !
+                ev.events = EPOLLOUT;
+                if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client, &ev) < 0) {
+                    console.issue("Failed to modify epoll for write event");
+                    close(client);
+                    return -1;
+                }
+                return 0;
+            }
+            if(start_cgi(clientObj, req, *route, epoll_fd, cgi_fds) == false) {
+                // send error response internal server error 500
+                std::map<std::string, std::string> Theaders;
+                Theaders["Content-Type"] = "text/html";
+                clientObj.response = ::response(client, startRequestTime, 500, Theaders, "", req, currentServer).sendResponse();
+                // switch to write event to send response !
+                ev.events = EPOLLOUT;
+                if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client, &ev) < 0) {
+                    console.issue("Failed to modify epoll for write event");
+                    close(client);
+                    return -1;
+                }
+                return 0; // Error starting CGI
+            }
+            return 0; // CGI started successfully, wait for output
+        }
+        else if (req.getMethod() == "GET") {
             response = methodGet(client, req, currentServer, startRequestTime, clientObj);
         } else if (req.getMethod() == "POST") {
-            response = methodPost(client, req, currentServer, startRequestTime);
+            response = methodPost(client, req, currentServer, startRequestTime, clientObj, users);
         } else if (req.getMethod() == "DELETE") {
             response = methodDelete(client, req, currentServer, startRequestTime);
         } else {
@@ -89,6 +167,28 @@ int handle_write_event(int client, ctr& currentServer, struct epoll_event& ev, C
             clientObj.write_len = 0;
         } else {
             return 0; // Header not fully sent, wait for next write event
+        }
+    }
+    if (clientObj.cgi_complete == true)
+    {
+        // Send CGI output
+        ssize_t bytes_sent = send(client, clientObj.cgi_output.c_str() + clientObj.write_sent, clientObj.cgi_output.size() - clientObj.write_sent, 0);
+        if (bytes_sent < 0) {
+            return 0; // Try again later (non-blocking socket)
+        }
+        clientObj.write_sent += static_cast<std::size_t>(bytes_sent);
+        if (clientObj.write_sent >= clientObj.cgi_output.size()) {
+            clientObj.cgi_complete = false;
+            clientObj.reset();
+            ev.events = EPOLLIN;
+            if (epoll_ctl(epoll_fd, EPOLL_CTL_MOD, client, &ev) < 0) {
+                console.issue("Failed to modify epoll for read event after CGI");
+                close(client);
+                return -1;
+            }
+            return 0;
+        } else {
+            return 0; // CGI output not fully sent, wait for next write event
         }
     }
     if (clientObj.header_sent == true && clientObj.is_streaming == true)

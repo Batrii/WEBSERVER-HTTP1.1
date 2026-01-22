@@ -18,6 +18,9 @@
 #include <client.hpp>
 #include <algorithm>
 #include <fcntl.h>
+#include <users.hpp>
+#include <ctime> // for std::time
+#include <response.hpp>
 
 std::string getNetworkIP();
 int run(long long start) {
@@ -26,6 +29,9 @@ int run(long long start) {
   std::vector<int> server_sockets;
   // Ignore SIGPIPE to prevent crash when client disconnects
   signal(SIGPIPE, SIG_IGN);
+  std::map<int, int> cgi_fds;
+  std::srand(std::time(NULL));
+  UserManager Users;
 
   std::vector<struct pollfd> pollfds; // list of poll file descriptors
   std::string networkIP = getNetworkIP(); // get the network IP address
@@ -88,7 +94,52 @@ int run(long long start) {
   while (true)
   {
     struct epoll_event event[1000];
-    int event_count = epoll_wait(epollfd, event, 1000, -1);
+    int event_count = epoll_wait(epollfd, event, 1000, 1000); // 1 second timeout
+  // ========== CHECK TIMEOUTS HERE (OUTSIDE event loop) ==========
+    long long current_time = time::clock();
+    for (std::map<int, int>::iterator it = cgi_fds.begin(); it != cgi_fds.end(); ) {
+      int cgi_fd = it->first;
+      int client_fd = it->second;
+      
+      std::map<int, Client>::iterator client_it = clients.find(client_fd);
+      if (client_it == clients.end()) { // Client not found, clean up
+        epoll_ctl(epollfd, EPOLL_CTL_DEL, cgi_fd, NULL);
+        close(cgi_fd);
+        cgi_fds.erase(it++);  // <-- Post-increment: erase current, move to next
+        continue;
+      }
+      
+      Client& cl = client_it->second;
+      // std::cout << "CGI check: elapsed=" << (current_time - cl.cgi_start_time) 
+      //           << "ms, timeout=" << cl.cgi_timeout_ms << "ms" << std::endl;
+      
+      if (cl.cgi_timeout_ms > 0 && (current_time - cl.cgi_start_time) > cl.cgi_timeout_ms) {
+        if (cl.cgi_pid > 0) {
+          kill(cl.cgi_pid, SIGKILL);
+        }
+        close(cgi_fd);
+        epoll_ctl(epollfd, EPOLL_CTL_DEL, cgi_fd, NULL);
+        
+        // Build timeout response with correct Content-Length
+        std::map<std::string, std::string> Theaders;
+        Theaders["Content-Type"] = "text/html";
+        cl.response = response(client_fd, cl.cgi_start_time, 504, Theaders, "", request(cl._request_data), ctr()).sendResponse();
+        cl.cgi_complete = false;  // Don't use CGI output path
+        cl.cgi_output.clear();
+        cl.header_sent = false;   // Reset so header gets sent
+        cl.write_sent = 0;
+        
+        struct epoll_event ev;
+        ev.data.fd = client_fd;
+        ev.events = EPOLLOUT;
+        epoll_ctl(epollfd, EPOLL_CTL_MOD, client_fd, &ev); // Switch to write event
+        epoll_ctl(epollfd, EPOLL_CTL_DEL, cgi_fd, NULL); // Remove CGI fd from epoll
+        cgi_fds.erase(it++);
+        continue;
+      }
+      ++it;
+    }
+
     for (int i = 0; i < event_count; i++)
     {
       int fd_check = event[i].data.fd;
@@ -109,6 +160,43 @@ int run(long long start) {
       }
       else
       {
+        if (cgi_fds.find(fd_check) != cgi_fds.end())
+        {
+            int client_fd = cgi_fds[fd_check];
+            Client &cl = clients[client_fd];
+            char buffer[4096];
+            ssize_t bytes_read = read(fd_check, buffer, sizeof(buffer) - 1); // leave space for null terminator
+            buffer[bytes_read] = '\0'; // null-terminate the string
+            
+            if(bytes_read > 0){
+              // std::cout << "pipe is ready to read " << bytes_read << " bytes" << std::endl;
+              // std::cout.write(buffer, bytes_read);
+              cl.cgi_output.append(buffer, bytes_read);
+            }
+            if(bytes_read == 0){
+              // std::cout << "pipe is ready to read " << bytes_read << " bytes" << std::endl;
+              // std::cout.write(buffer, bytes_read);
+              // buffer[bytes_read] = '\0';
+              // cl.cgi_output.append(buffer, bytes_read);
+              cl.cgi_complete = true;
+
+              std::stringstream response_cgi;
+              response_cgi << "HTTP/1.1 200 OK\r\n";
+              response_cgi << "Content-Length: " << cl.cgi_output.size() << "\r\n";
+              response_cgi << "Content-Type: text/html\r\n";
+              response_cgi << "\r\n";
+              cl.response = response_cgi.str();
+              struct epoll_event ev;
+              ev.data.fd = client_fd;
+              ev.events = EPOLLOUT; // Ready to write response
+              epoll_ctl(epollfd, EPOLL_CTL_MOD, client_fd, &ev); // Switch to write event
+              epoll_ctl(epollfd, EPOLL_CTL_DEL, fd_check, NULL); // Remove CGI fd from epoll
+              cgi_fds.erase(fd_check); // Remove from tracking map
+              request ee(cl._request_data);
+              console.METHODS(ee.getMethod(), ee.getPath(), 200, cl.time);
+            }
+            continue; // Move to next event
+        }
         // This is a client socket
         std::map< int, Client >::iterator client_it = clients.find(fd_check);
         if (client_it == clients.end()) {
@@ -129,7 +217,7 @@ int run(long long start) {
         }       
         else if (event[i].events & EPOLLIN)
         {
-          if (handle_read_event(fd_check, server[server_idx], event[i], clientObj, server_sockets, epollfd) < 0) {
+          if (handle_read_event(fd_check, server[server_idx], event[i], clientObj, server_sockets, epollfd, Users, cgi_fds) < 0) {
             epoll_ctl(epollfd, EPOLL_CTL_DEL, fd_check, NULL);
             close(fd_check);
             clients.erase(fd_check);
