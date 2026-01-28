@@ -1,7 +1,7 @@
 {
   "servers": [
     {
-      "port": "3000",
+      "port": "3009",
       "name": "my-app",
       "version": "0.1.0",
       "404": "./404.html",

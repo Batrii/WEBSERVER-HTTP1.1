@@ -11,6 +11,7 @@ class request {
     std::map<std::string, std::string> _headers;
     std::string _body;
     std::size_t _badRequest;
+    std::string _query;
   public:
     std::string const getMethod(void) const throw() { return this->_method; }
     std::string const getPath(void) const throw() { return this->_path; }
@@ -56,8 +57,11 @@ class request {
       std::size_t posQuery = pathTemp.find("?");
       std::size_t posFragment = pathTemp.find("#");
       std::size_t endPath = pathTemp.length();
-      if (posQuery != std::string::npos)
+      if (posQuery != std::string::npos) {
         endPath = std::min(endPath, posQuery);
+        this->_query = pathTemp.substr(posQuery + 1);
+        std::cout << this->_query << std::endl;
+      }
       if (posFragment != std::string::npos)
         endPath = std::min(endPath, posFragment);
       this->_path = pathTemp.substr(0, endPath);
