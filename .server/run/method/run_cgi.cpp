@@ -9,13 +9,43 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <cstdlib>
+#include <map>
+#include <sstream>
+#include <stdlib.h>
 
+// not work yeat ! 
+void build_env(request &req, rt &route, std::vector<char*>& enva){
+
+    std::vector<std::string> env_cgi;
+    std::stringstream content_lenght;
+    content_lenght << req.getBody().length();
+    std::map<std::string, std::string> headers = req.getHeaders();
+    
+    env_cgi.push_back("REQUEST_METHOD=" + req.getMethod());
+    env_cgi.push_back("GATEWAY_INTERFACE=CGI/1.1");
+    env_cgi.push_back("SERVER_PROTOCOL=HTTP/1.1");
+    env_cgi.push_back("QUERY_STRING=" + req.getQuery());
+    if (req.getMethod() == "POST") {
+            std::map<std::string, std::string>::iterator it = headers.find("Content-Type");
+            env_cgi.push_back("CONTENT_LENGTH=" + content_lenght.str());
+            if(it != headers.end())
+                env_cgi.push_back("CONTENT_TYPE=" + it->second);
+    }
+    env_cgi.push_back("SCRIPT_NAME=" + route.path());
+    env_cgi.push_back("PATH_TRANSLATED=" + route.cgiScript());
+    // std::vector<char*> envp;
+    for (size_t i = 0; i < env_cgi.size(); ++i)
+        enva.push_back(const_cast<char*>(env_cgi[i].c_str()));
+    enva.push_back(NULL);
+}
 
 bool start_cgi(Client& clientObj, request& req, rt& route, int epoll_fd, std::map<int, int>& cgi_fds) {
     int pipefd[2]; // for script output
     int postfd[2]; // for post
     if (pipe(pipefd) < 0 || pipe(postfd) < 0)
         return false;
+    // std::vector<char*> env;
+    // build_env(req, route, env);
 
     pid_t pid = fork();
     if(pid < 0)
