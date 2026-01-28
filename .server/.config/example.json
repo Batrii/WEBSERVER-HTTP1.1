@@ -1,7 +1,7 @@
 {
   "servers": [
     {
-      "port": "3000",
+      "port": "3009",
       "name": "my-app",
       "version": "0.1.0",
       "404": "./404.html",
@@ -81,6 +81,12 @@
         {
           "path": "/hello",
           "cgi_script": "./cgi/hello.py",
+          "cgi_interpreter": "/usr/bin/python3",
+          "cgi_timeout": "10"
+        },
+        {
+          "path": "/testcgi",
+          "cgi_script": "./cgi/script_check_env.py",
           "cgi_interpreter": "/usr/bin/python3",
           "cgi_timeout": "10"
         }

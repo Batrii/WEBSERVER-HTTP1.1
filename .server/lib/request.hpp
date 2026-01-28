@@ -11,12 +11,14 @@ class request {
     std::map<std::string, std::string> _headers;
     std::string _body;
     std::size_t _badRequest;
+    std::string _query;
   public:
     std::string const getMethod(void) const throw() { return this->_method; }
     std::string const getPath(void) const throw() { return this->_path; }
     std::string const getHTTP(void) const throw() { return this->_http; }
     std::map<std::string, std::string> const getHeaders(void) const throw() { return this->_headers; }
     std::string const getBody(void) const throw() { return this->_body; }
+    std::string const getQuery(void) const throw() { return this->_query; }
 
     request(std::string req): _method("UNDEFINED"), _path("UNDEFINED"), _http("UNDEFINED"), _badRequest(0) {
 
@@ -56,8 +58,11 @@ class request {
       std::size_t posQuery = pathTemp.find("?");
       std::size_t posFragment = pathTemp.find("#");
       std::size_t endPath = pathTemp.length();
-      if (posQuery != std::string::npos)
+      if (posQuery != std::string::npos) {
         endPath = std::min(endPath, posQuery);
+        this->_query = pathTemp.substr(posQuery + 1);
+        std::cout << this->_query << std::endl;
+      }
       if (posFragment != std::string::npos)
         endPath = std::min(endPath, posFragment);
       this->_path = pathTemp.substr(0, endPath);
