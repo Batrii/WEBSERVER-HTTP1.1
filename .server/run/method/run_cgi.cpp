@@ -14,7 +14,7 @@
 #include <stdlib.h>
 
 // not work yeat ! 
-void build_env(request &req, rt &route, std::vector<char*>& enva){
+void build_env(request &req, rt &route, char **& enva, char *envp[]) {
 
     std::vector<std::string> env_cgi;
     std::stringstream content_lenght;
@@ -33,26 +33,34 @@ void build_env(request &req, rt &route, std::vector<char*>& enva){
     }
     env_cgi.push_back("SCRIPT_NAME=" + route.path());
     env_cgi.push_back("PATH_TRANSLATED=" + route.cgiScript());
-    // std::vector<char*> envp;
-    for (size_t i = 0; i < env_cgi.size(); ++i)
-        enva.push_back(const_cast<char*>(env_cgi[i].c_str()));
-    enva.push_back(NULL);
+    // add existing environment variables
+    for (int i = 0; envp[i] != NULL; ++i)
+        env_cgi.push_back(std::string(envp[i]));
+    // allocate and copy to char* array
+    char** enva_ptr = new char*[env_cgi.size() + 1];
+
+    for (size_t i = 0; i < env_cgi.size(); ++i){
+        enva_ptr[i] = new char[env_cgi[i].size() + 1];
+        std::copy(env_cgi[i].begin(), env_cgi[i].end(), enva_ptr[i]);
+        enva_ptr[i][env_cgi[i].size()] = '\0';
+    }
+    enva_ptr[env_cgi.size()] = NULL;
+    enva = enva_ptr;
 }
 
-bool start_cgi(Client& clientObj, request& req, rt& route, int epoll_fd, std::map<int, int>& cgi_fds) {
+bool start_cgi(Client& clientObj, request& req, rt& route, int epoll_fd, std::map<int, int>& cgi_fds, char *envp[]) {
     int pipefd[2]; // for script output
     int postfd[2]; // for post
     if (pipe(pipefd) < 0 || pipe(postfd) < 0)
         return false;
-    // std::vector<char*> env;
-    // build_env(req, route, env);
-
     pid_t pid = fork();
     if(pid < 0)
         return false;
     if (pid == 0)
     {
         // CHILD
+        char **env;
+        build_env(req, route, env, envp);
         if(req.getMethod() == "POST")
             dup2(postfd[0], STDIN_FILENO);
         // for set ouput of cgi in the pipe
@@ -65,7 +73,12 @@ bool start_cgi(Client& clientObj, request& req, rt& route, int epoll_fd, std::ma
         argv[0] = const_cast<char*>(route.cgiInterpreter().c_str()); // e.g., "/usr/bin/python"
         argv[1] = const_cast<char*>(route.cgiScript().c_str()); // e.g., "/path/to/script.py"
         argv[2] = NULL; // Null-terminate the argument list
-        execve(argv[0], argv, NULL);  // Use execvp to search PATH for interpreter
+        execve(argv[0], argv, env);  // Use execvp to search PATH for interpreter
+        // If execve returns, an error occurred
+        // Clean up allocated environment variables
+        for (size_t i = 0; env[i] != NULL; ++i)
+            delete[] env[i];
+        delete[] env;
         exit(127);
     }
 

@@ -24,7 +24,7 @@
 #include <sys/wait.h> // track cgi exit status
 
 std::string getNetworkIP();
-int run(long long start) {
+int run(long long start, char *envp[]) {
 
   std::map<int, Client> clients;
   std::vector<int> server_sockets;
@@ -368,7 +368,7 @@ int run(long long start) {
         }       
         else if (event[i].events & EPOLLIN)
         {
-          if (handle_read_event(fd_check, server[server_idx], event[i], clientObj, server_sockets, epollfd, Users, cgi_fds) < 0) {
+          if (handle_read_event(fd_check, server[server_idx], event[i], clientObj, server_sockets, epollfd, Users, cgi_fds, envp) < 0) {
             epoll_ctl(epollfd, EPOLL_CTL_DEL, fd_check, NULL);
             close(fd_check);
             clients.erase(fd_check);
