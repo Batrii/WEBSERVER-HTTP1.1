@@ -4,6 +4,7 @@
 #include "server.hpp"
 #include <iostream>
 #include <fstream>
+std::string generate_uiid(size_t length);
 class urlencoder {
   private:
     std::map<std::string, std::string> _fields;
@@ -45,7 +46,7 @@ void urlencoder::parseBodyContent(std::string& content, ctr& currentServer)
     }
     this->_fields[key] = value;
   }
-  std::string filepath = currentServer.uploaddir() + "form_urlencoded.txt";
+  std::string filepath = currentServer.uploaddir() + generate_uiid(6) + "-" + "form_urlencoded.txt";
   std::ofstream outfile(filepath.c_str());
   for (std::map<std::string, std::string>::iterator it = this->_fields.begin(); it != this->_fields.end(); ++it) {
     outfile << "Field Name: " << it->first << ", Value: " << it->second << "\n";

@@ -34,10 +34,10 @@ static void fillDefault(void) {
       server[i].log() = ".server/.log/" + server[i].name() + "/" + server[i].name() + ".log";
     else
       server[i].log() = server[i].root() + server[i].log();
-    if (server[i].uploaddir().empty())
-      server[i].uploaddir() = server[i].root() + "/uploads";
-    else
-      server[i].uploaddir() = server[i].root() + server[i].uploaddir();
+    // if (server[i].uploaddir().empty())
+    server[i].uploaddir() = server[i].root();
+    // else
+    //   server[i].uploaddir() = server[i].root() + server[i].uploaddir();
     if (!server[i].bodylimit())
       server[i].bodylimit() = 1048576;
     if (!server[i].timeout())

@@ -13,6 +13,8 @@
 #include <users.hpp>
 #include <client.hpp>
 
+
+
 std::string methodPost(int client, request& req, ctr& currentServer, long long startRequestTime, Client &clientObj, UserManager &userManager) {
   // find matching route at config file
 
@@ -117,7 +119,7 @@ std::string methodPost(int client, request& req, ctr& currentServer, long long s
     else if (contentType.find("text/plain") != std::string::npos)
     {
       std::string contentstored = req.getBody();
-      std::ofstream outfile((currentServer.uploaddir() + "plain_text.txt").c_str());
+      std::ofstream outfile((currentServer.uploaddir() + generate_uiid(6) + "-" + "plain_text.txt").c_str());
       outfile << contentstored;
       outfile.close();
       std::map<std::string, std::string> headers;
@@ -141,7 +143,7 @@ std::string methodPost(int client, request& req, ctr& currentServer, long long s
       if (slash_pos != std::string::npos) {
         filename += "." + contentType.substr(slash_pos + 1);
       }
-      std::string filepath = currentServer.uploaddir() + filename;
+      std::string filepath = currentServer.uploaddir() + generate_uiid(6) + "-" + filename;
       std::ofstream outfile(filepath.c_str(), std::ios::binary);
       outfile.write(req.getBody().c_str(), req.getBody().size());
       outfile.close();
