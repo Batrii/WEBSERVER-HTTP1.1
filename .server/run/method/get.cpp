@@ -95,17 +95,17 @@ std::string methodGet(int client, request& req, ctr& currentServer, long long st
   } else {
     sourcePathToHandle = route->source();
 
-  for (std::size_t i = 0; i < route->length(); i++) {
-    if (route->method(i) == "GET") {
-      break;
+    for (std::size_t i = 0; i < route->length(); i++) {
+      if (route->method(i) == "GET") {
+        break;
+      }
+      if (i == route->length() - 1) {
+        std::map<std::string, std::string> Theaders;
+        Theaders["Allow"] = "GET, POST, DELETE";
+        Theaders["Content-Type"] = "text/html";
+        return response(client, startRequestTime, 405, Theaders, "", req, currentServer).sendResponse();
+      }
     }
-    if (i == route->length() - 1) {
-      std::map<std::string, std::string> Theaders;
-      Theaders["Allow"] = "GET, POST, DELETE";
-      Theaders["Content-Type"] = "text/html";
-      return response(client, startRequestTime, 405, Theaders, "", req, currentServer).sendResponse();
-    }
-  }
 
     if (route->cgiScript().empty() && route->dictlist() == false && route->redirect().empty()) {
       struct stat fileStat;

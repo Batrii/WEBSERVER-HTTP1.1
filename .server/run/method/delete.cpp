@@ -25,20 +25,23 @@ std::string methodDelete(int client, request& req, ctr& currentServer, long long
   std::string sourcePathToDelete;
 
   if (!route) {
-     sourcePathToDelete = currentServer.root() + req.getPath();
+    sourcePathToDelete = currentServer.root() + req.getPath();
     // There is NO automatic index resolution for DELETE
   } else {
-    sourcePathToDelete = route->source();}
+    sourcePathToDelete = route->source();
+  }
 
-  for (std::size_t i = 0; i < route->length(); i++) {
-    if (route->method(i) == "DELETE") {
-      break;
-    }
-    if (i == route->length() - 1) {
-      std::map<std::string, std::string> Theaders;
-      Theaders["Allow"] = "GET, POST, DELETE";
-      Theaders["Content-Type"] = "text/html";
-      return response(client, startRequestTime, 405, Theaders, "", req, currentServer).sendResponse();
+  if (route) {
+    for (std::size_t i = 0; i < route->length(); i++) {
+      if (route->method(i) == "DELETE") {
+        break;
+      }
+      if (i == route->length() - 1) {
+        std::map<std::string, std::string> Theaders;
+        Theaders["Allow"] = "GET, POST, DELETE";
+        Theaders["Content-Type"] = "text/html";
+        return response(client, startRequestTime, 405, Theaders, "", req, currentServer).sendResponse();
+      }
     }
   }
 

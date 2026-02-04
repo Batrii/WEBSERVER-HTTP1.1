@@ -10,6 +10,8 @@
 
         { "path": "/upload", "source": "upload.html" },
 
+        { "path": "/delete", "source": "delete/deleteme.html", "method": ["GET", "DELETE"] },
+
         { "path": "/list", "dictlist": "true" },
         { "path": "/list/home", "dictlist": "true" },
         { "path": "/list/home/test", "dictlist": "true" },

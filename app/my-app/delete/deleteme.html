@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Request</title>
+</head>
+<body>
+    <h1>Delete Request Test</h1>
+    <button id="deleteBtn">Delete</button>
+
+    <script>
+        document.getElementById('deleteBtn').addEventListener('click', async () => {
+            try {
+                const response = await fetch('http://localhost:3000', {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    alert('Delete request successful');
+                } else {
+                    alert('Delete request failed: ' + response.status);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
